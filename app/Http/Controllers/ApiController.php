@@ -17,6 +17,7 @@ use App\QuoteCategory;
 use App\QuoteLike;
 use App\QuoteReport;
 use App\ReportReason;
+use App\UserFeed;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -193,7 +194,7 @@ class ApiController extends Controller
         try {
 
             $filterObject = json_decode($request->get("authorFilters"));
-            $loggedAuthorID = $request->get("loggedAuthorID");// use of this variable is to determine whether current logged user following others users
+            $loggedAuthorID = $request->get("loggedAuthorId");// use of this variable is to determine whether current logged user following others users
 
             $authorID = $filterObject->authorID;
             $filterType = $filterObject->filterType;//follower or following
@@ -367,7 +368,11 @@ class ApiController extends Controller
         try {
 
             $filterObject = json_decode($request->get("quoteFilters"));
-            $loggedAuthorID = $request->get("loggedAuthorID");// use of this variable is to determine whether current logged user following others users
+
+            if($filterObject->filterType == "feed") {
+                return $this->getUserFeed($request);
+            }
+            $loggedAuthorID = $request->get("loggedAuthorId");// use of this variable is to determine whether current logged user following others users
 
             $sql = DB::table("quotes")
                 ->leftJoin('quote_categories', 'quotes.id', '=', 'quote_categories.quote_id')
@@ -428,6 +433,86 @@ class ApiController extends Controller
             }
 
             //dd($quotes->toSql());
+
+            $quotes = $sql->get();
+            $response = array();
+            foreach ($quotes as $quote) {
+
+                $quoteObject = app()->make('stdClass');
+
+                $quoteObject->id = (string)$quote->id;
+                $quoteObject->totalLikes = (string)$quote->total_likes;
+                $quoteObject->totalComments = (string)$quote->total_comments;
+                $quoteObject->totalViews = (string)$quote->total_views;
+
+                $isLiked = QuoteLike::where('quote_id', $quote->id)
+                    ->where('user_id', $loggedAuthorID)
+                    ->first();
+
+                if ($isLiked) {
+                    $quoteObject->likeQuote = true;
+                } else {
+                    $quoteObject->likeQuote = false;
+                }
+
+                $quoteObject->isCopyrighted = $quote->is_copyright ? true : false;
+                $quoteObject->source = $quote->source;
+                $quoteObject->imageUrl = $this->getQuotesImageUrl($quote->image);
+                $quoteObject->caption = $quote->caption;
+                $quoteObject->dateAdded = date('d-M-y h:i A', strtotime($quote->created_at));
+                $quoteObject->tags = explode(',', $quote->tags);
+
+
+                $quoteObject->author = app()->make('stdClass');
+                $quoteObject->author->id = (string)$quote->user_id;
+                $quoteObject->author->name = $quote->user_name;
+
+                $isFollowing = Follower::where('user_id', $quote->user_id)
+                    ->where('follower_id', $loggedAuthorID)
+                    ->first();
+
+                if ($isFollowing) {
+                    $quoteObject->author->followingAuthor = true;
+                } else {
+                    $quoteObject->author->followingAuthor = false;
+                }
+                $quoteObject->author->profileImage = $this->getUsersImageUrl($quote->user_profile_image);
+
+                $response[] = $quoteObject;
+            }
+
+            $apiResponse->setResponse($response);
+
+            return $apiResponse->outputResponse($apiResponse);
+
+        } catch (\Exception $e) {
+            $apiResponse->error->setType(config('api.error_type_dialog'));
+            $apiResponse->error->setMessage($e->getMessage());
+            return $apiResponse->outputResponse($apiResponse);
+
+        }
+    }
+
+    public function getUserFeed(Request $request)
+    {
+        $apiResponse = new ApiResponse();
+        try {
+
+            $filterObject = json_decode($request->get("quoteFilters"));
+
+            $loggedAuthorID = $request->get("loggedAuthorId");
+
+            $sql = DB::table("user_feed")
+                        ->leftJoin('quotes', 'user_feed.quote_id', '=', 'quotes.id')
+                        ->leftJoin('users', 'user_feed.quote_user_id', '=', 'users.id')
+                        ->select('quotes.*', 'users.name as user_name', 'users.profile_image as user_profile_image');
+
+            $sql->where("user_feed.user_id", $loggedAuthorID);
+            $sql->where("quotes.active", 1);
+            $sql->where("users.active", 1);
+            $sql->orderBy('user_feed.quote_id', 'desc');
+
+            $sql->paginate(10, ['*'], 'page', $filterObject->page);
 
             $quotes = $sql->get();
             $response = array();
@@ -637,7 +722,7 @@ class ApiController extends Controller
 
             $response = "";
 
-            $loggedAuthorID = $request->get("loggedAuthorID");
+            $loggedAuthorID = $request->get("loggedAuthorId");
             $quoteID = $request->get("quoteId");
             $reportReasonID = $request->get("reportId");
 
@@ -662,7 +747,7 @@ class ApiController extends Controller
 
             $response = "";
 
-            $loggedAuthorID = $request->get("loggedAuthorID");
+            $loggedAuthorID = $request->get("loggedAuthorId");
             $quoteID = $request->get("quoteId");
 
             $likeExist = QuoteLike::where('quote_id', $quoteID)
@@ -695,7 +780,7 @@ class ApiController extends Controller
 
             $response = "";
 
-            $loggedAuthorID = $request->get("loggedAuthorID");
+            $loggedAuthorID = $request->get("loggedAuthorId");
             $authorID = $request->get("authorId");
 
             $isFollower = Follower::where('user_id', $authorID)
@@ -706,7 +791,9 @@ class ApiController extends Controller
                 $follower->user_id = $authorID;
                 $follower->follower_id = $loggedAuthorID;
                 $follower->save();
+                $this->saveFeed($follower->user_id,$follower->follower_id);
             } else {
+                $this->deleteFeed($isFollower->user_id,$isFollower->follower_id);
                 $isFollower->delete();
             }
 
@@ -997,7 +1084,7 @@ class ApiController extends Controller
 
             $response = "";
 
-            $loggedAuthorID = $request->get("loggedAuthorID");
+            $loggedAuthorID = $request->get("loggedAuthorId");
             $commentID = $request->get("commentId");
             $reportReasonID = $request->get("reportId");
 
@@ -1023,6 +1110,34 @@ class ApiController extends Controller
     public function getQuotesImageUrl($imagePath)
     {
         return asset(config('app.dir_image') . config('app.dir_quotes_image') . $imagePath);
+    }
+
+    public function saveFeed($feeder_user_id, $target_user_id)
+    {
+        $quotes = Quote::where('user_id', $feeder_user_id)
+            ->where('active', 1)
+            ->where('is_feeded', 1)
+            ->where('quotes.created_at', '>=', Carbon::now()->subMonths(2))
+            ->select('id', 'user_id')
+            ->get();
+
+        foreach ($quotes as $quote) {
+
+            $userFeed = new UserFeed();
+
+            $userFeed->user_id = $target_user_id;
+            $userFeed->quote_id = $quote->id;
+            $userFeed->quote_user_id = $quote->user_id;
+
+            $userFeed->save();
+        }
+    }
+
+    public function deleteFeed($feeder_user_id, $target_user_id)
+    {
+        $deletedRows = UserFeed::where('quote_user_id', $feeder_user_id)
+            ->where('user_id', $target_user_id)
+            ->delete();
     }
 
 }
