@@ -348,9 +348,7 @@ class ApiController extends Controller
                 $authorObject->country = $countryObject;
             }
 
-            $response[] = $authorObject;
-
-            $apiResponse->setResponse($response);
+            $apiResponse->setResponse($authorObject);
 
             return $apiResponse->outputResponse($apiResponse);
 
@@ -648,9 +646,7 @@ class ApiController extends Controller
             }
             $quoteObject->categories = $categories;
 
-            $response[] = $quoteObject;
-
-            $apiResponse->setResponse($response);
+            $apiResponse->setResponse($quoteObject);
 
             return $apiResponse->outputResponse($apiResponse);
 
