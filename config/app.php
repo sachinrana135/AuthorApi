@@ -135,9 +135,9 @@ return [
 
     'dir_users_image' => "users/",
 
-    'default_profile_image' => "image1",
+    'default_profile_image' => "image1.jpg",
 
-    'default_cover_image' => "image2",
+    'default_cover_image' => "image2.jpg",
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers
