@@ -136,8 +136,8 @@ class ApiController extends Controller
 
             foreach ($categories as $category) {
                 $categoryObject = app()->make('stdClass');
-                $categoryObject->countryId = (string)$category->id;
-                $categoryObject->countryName = $category->name;
+                $categoryObject->id = (string)$category->id;
+                $categoryObject->name = $category->name;
                 $response[] = $categoryObject;
             }
 
@@ -200,6 +200,8 @@ class ApiController extends Controller
             $filterType = $filterObject->filterType;//follower or following
             $page = $filterObject->page;// current page
 
+            $response = array();
+
             if ($filterType == "follower") {
                 $followers = Follower::where('user_id', $authorID)
                     ->paginate(10, ['*'], 'page', $page);
@@ -226,13 +228,9 @@ class ApiController extends Controller
                     }
                 }
 
-                $apiResponse->setResponse($response);
-
             } else if ($filterType == "following") {
                 $following = Follower::where('follower_id', $authorID)
                     ->paginate(10, ['*'], 'page', $page);
-
-                $response = array();
 
                 foreach ($following as $author) {
                     if ($author->Following != null) {
@@ -367,7 +365,7 @@ class ApiController extends Controller
 
             $filterObject = json_decode($request->get("quoteFilters"));
 
-            if($filterObject->filterType == "feed") {
+            if(isset($filterObject->filterType) && $filterObject->filterType == "feed") {
                 return $this->getUserFeed($request);
             }
             $loggedAuthorID = $request->get("loggedAuthorId");// use of this variable is to determine whether current logged user following others users
@@ -429,8 +427,6 @@ class ApiController extends Controller
             if (isset($filterObject->page)) {
                 $sql->paginate(10, ['*'], 'page', $filterObject->page);
             }
-
-            //dd($quotes->toSql());
 
             $quotes = $sql->get();
             $response = array();
