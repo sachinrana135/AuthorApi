@@ -468,8 +468,8 @@ class ApiController extends Controller
                 $quoteObject->id = (string)$quote->id;
                 /*$quoteObject->totalLikes = (string)$quote->total_likes;
                 $quoteObject->totalComments = (string)$quote->total_comments;*/
-                $response->totalLikes = (string)QuoteLike::where('quote_id', $quote->id)->count();;
-                $response->totalComments = (string)Comment::where('quote_id', $quote->id)->where('active', 1)->count();;
+                $quoteObject->totalLikes = (string)QuoteLike::where('quote_id', $quote->id)->count();;
+                $quoteObject->totalComments = (string)Comment::where('quote_id', $quote->id)->where('active', 1)->count();;
                 $quoteObject->totalViews = (string)$quote->total_views;
 
                 $isLiked = QuoteLike::where('quote_id', $quote->id)
