@@ -206,9 +206,9 @@ class ApiController extends Controller
                 $followers = Follower::where('user_id', $authorID)
                     ->paginate(10, ['*'], 'page', $page);
 
-                foreach ($followers as $follower_id) {
+                foreach ($followers as $user) {
 
-                    $follower = Author::where('id', $follower_id)
+                    $follower = Author::where('id', $user->follower_id)
                         ->where('active', 1)
                         ->select('id', 'name', 'profile_image')
                         ->first();
@@ -218,9 +218,9 @@ class ApiController extends Controller
 
                         $authorObject->id = (string)$follower->id;
                         $authorObject->name = $follower->name;
-                        $authorObject->profileImage = $follower->profile_image;
+                        $authorObject->profileImage = $this->getUserProfileImageUrl($follower->id);
 
-                        $isFollowing = Follower::where('user_id', $follower->Follower->id)
+                        $isFollowing = Follower::where('user_id', $follower->id)
                             ->where('follower_id', $loggedAuthorID)
                             ->first();
 
@@ -233,22 +233,23 @@ class ApiController extends Controller
                     }
                 }
 
+
             } else if ($filterType == "following") {
                 $following = Follower::where('follower_id', $authorID)
                     ->paginate(10, ['*'], 'page', $page);
 
-                foreach ($following as $following_id) {
+                foreach ($following as $user) {
 
-                    $following = Author::where('id', $following_id)
+                    $following = Author::where('id', $user->user_id)
                         ->where('active', 1)
                         ->select('id', 'name', 'profile_image')
                         ->first();
 
                     if ($following != null) {
                         $authorObject = app()->make('stdClass');
-                        $authorObject->id = (string)$following->id;;
+                        $authorObject->id = (string)$following->id;
                         $authorObject->name = $following->name;
-                        $authorObject->profileImage = $following->profile_image;
+                        $authorObject->profileImage = $this->getUserProfileImageUrl($following->id);
 
                         if ($loggedAuthorID == $authorID) { // User is seeing whom he followings
                             $authorObject->followingAuthor = true;
@@ -278,6 +279,25 @@ class ApiController extends Controller
             return $apiResponse->outputResponse($apiResponse);
 
         }
+    }
+
+    public function getUserProfileImageUrl($user_id)
+    {
+        $author = Author::where('id', $user_id)
+            ->select('firebase_profile_image', 'profile_image')
+            ->first();
+        if ($author->profile_image == null && $author->firebase_profile_image == null) {
+            return $this->getUsersImageUrl(config('app.default_profile_image'));
+        } else if ($author->profile_image == null) {
+            return $author->firebase_profile_image;
+        } else {
+            return $this->getUsersImageUrl($author->profile_image);
+        }
+    }
+
+    public function getUsersImageUrl($imagePath)
+    {
+        return asset(config('app.dir_image') . config('app.dir_users_image') . $imagePath);
     }
 
     public function getQuotes(Request $request)
@@ -399,7 +419,7 @@ class ApiController extends Controller
                 } else {
                     $quoteObject->author->followingAuthor = false;
                 }
-                $quoteObject->author->profileImage = $this->getUsersImageUrl($quote->user_profile_image);
+                $quoteObject->author->profileImage = $this->getUserProfileImageUrl($quote->user_id);
 
                 $response[] = $quoteObject;
             }
@@ -481,7 +501,7 @@ class ApiController extends Controller
                 } else {
                     $quoteObject->author->followingAuthor = false;
                 }
-                $quoteObject->author->profileImage = $this->getUsersImageUrl($quote->user_profile_image);
+                $quoteObject->author->profileImage = $this->getUserProfileImageUrl($quote->user_id);
 
                 $response[] = $quoteObject;
             }
@@ -501,11 +521,6 @@ class ApiController extends Controller
     public function getQuotesImageUrl($imagePath)
     {
         return asset(config('app.dir_image') . config('app.dir_quotes_image') . $imagePath);
-    }
-
-    public function getUsersImageUrl($imagePath)
-    {
-        return asset(config('app.dir_image') . config('app.dir_users_image') . $imagePath);
     }
 
     public function getQuote(Request $request)
@@ -573,7 +588,7 @@ class ApiController extends Controller
             } else {
                 $response->author->followingAuthor = false;
             }
-            $response->author->profileImage = $this->getUsersImageUrl($author->profile_image);
+            $response->author->profileImage = $this->getUserProfileImageUrl($author->id);
 
             $language = Language::where('active', 1)
                 ->where('id', $quote->language_id)
@@ -654,7 +669,7 @@ class ApiController extends Controller
 
                 $authorObject->id = (string)$comment->user_id;
                 $authorObject->name = $comment->user_name;
-                $authorObject->profileImage = $this->getUsersImageUrl($comment->user_profile_image);
+                $authorObject->profileImage = $this->getUserProfileImageUrl($comment->user_id);
 
                 $commentObject->author = $authorObject;
 
@@ -862,19 +877,9 @@ class ApiController extends Controller
             $response->dob = $author->dob;
             $response->mobile = $author->mobile;
             $response->email = $author->email;
-            if ($author->profile_image == null && $author->firebase_profile_image == null) {
-                $response->profileImage = $this->getUsersImageUrl(config('app.default_profile_image'));
-            } else if ($author->profile_image == null) {
-                $response->profileImage = $author->firebase_profile_image;
-            } else {
-                $response->profileImage = $this->getUsersImageUrl($author->profile_image);
-            }
+            $response->profileImage = $this->getUserProfileImageUrl($author->id);
+            $response->coverImage = $this->getUserCoverImageUrl($author->id);
 
-            if ($author->cover_image == null) {
-                $response->coverImage = $this->getUsersImageUrl(config('app.default_cover_image'));
-            } else {
-                $response->coverImage = $this->getUsersImageUrl($author->cover_image);
-            }
             $response->status = base64_decode($author->status);
             $response->totalQuotes = Quote::where('user_id', $authorId)
                 ->count();
@@ -924,6 +929,19 @@ class ApiController extends Controller
             $apiResponse->error->setMessage($e->getMessage());
             return $apiResponse->outputResponse($apiResponse);
 
+        }
+    }
+
+    public function getUserCoverImageUrl($user_id)
+    {
+        $author = Author::where('id', $user_id)
+            ->select('cover_image')
+            ->first();
+
+        if ($author->cover_image == null) {
+            return $this->getUsersImageUrl(config('app.default_cover_image'));
+        } else {
+            return $this->getUsersImageUrl($author->cover_image);
         }
     }
 
