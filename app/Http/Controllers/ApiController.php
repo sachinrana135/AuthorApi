@@ -381,7 +381,7 @@ class ApiController extends Controller
                 $quoteObject->isCopyrighted = $quote->is_copyright ? true : false;
                 $quoteObject->source = $quote->source;
                 $quoteObject->imageUrl = $this->getQuotesImageUrl($quote->image);
-                $quoteObject->caption = $quote->caption;
+                $quoteObject->caption = base64_decode($quote->caption);
                 $quoteObject->dateAdded = date('d-M-y h:i A', strtotime($quote->created_at));
                 $quoteObject->tags = explode(',', $quote->tags);
 
@@ -463,7 +463,7 @@ class ApiController extends Controller
                 $quoteObject->isCopyrighted = $quote->is_copyright ? true : false;
                 $quoteObject->source = $quote->source;
                 $quoteObject->imageUrl = $this->getQuotesImageUrl($quote->image);
-                $quoteObject->caption = $quote->caption;
+                $quoteObject->caption = base64_decode($quote->caption);
                 $quoteObject->dateAdded = date('d-M-y h:i A', strtotime($quote->created_at));
                 $quoteObject->tags = explode(',', $quote->tags);
 
@@ -548,7 +548,7 @@ class ApiController extends Controller
             $response->isCopyrighted = $quote->is_copyright ? true : false;
             $response->source = $quote->source;
             $response->imageUrl = $this->getQuotesImageUrl($quote->image);
-            $response->caption = $quote->caption;
+            $response->caption = base64_decode($quote->caption);
             $response->dateAdded = $quote->created_at->format('d-M-y h:i A');
             $response->tags = trim($quote->tags) != "" ? explode(',', $quote->tags) : array();
 
@@ -590,7 +590,7 @@ class ApiController extends Controller
                 ->leftJoin('categories', 'quote_categories.category_id', '=', 'categories.id')
                 ->select('categories.*')
                 ->where("quote_categories.quote_id", $quote->id)
-                ->where("quote.active", 1)
+                ->where("categories.active", 1)
                 ->get();
 
             foreach ($categories as $category) {
@@ -875,7 +875,7 @@ class ApiController extends Controller
             } else {
                 $response->coverImage = $this->getUsersImageUrl($author->cover_image);
             }
-            $response->status = $author->status;
+            $response->status = base64_decode($author->status);
             $response->totalQuotes = Quote::where('user_id', $authorId)
                 ->count();
             $response->totalLikes = 0;
@@ -947,7 +947,7 @@ class ApiController extends Controller
             $author->mobile = $author_data->mobile;
             $author->dob = date('Y-m-d', strtotime($author_data->dob));
             $author->gender = $author_data->gender;
-            $author->status = $author_data->status;
+            $author->status = base64_encode($author_data->status);
 
             $author->save();
 
@@ -1117,7 +1117,7 @@ class ApiController extends Controller
             $quote->user_id = $quote_data->author->id;
             $quote->content = implode(',', $quote_data->content);
             $quote->language_id = $quote_data->language->languageId;
-            $quote->caption = $quote_data->caption;
+            $quote->caption = base64_encode($quote_data->caption);
             $quote->source = $quote_data->source;
             $quote->tags = implode(',', $quote_data->tags);
             $quote->is_copyright = $quote_data->isCopyrighted ? 1 : 0;
