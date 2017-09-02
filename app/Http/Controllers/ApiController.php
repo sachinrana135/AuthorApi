@@ -550,7 +550,7 @@ class ApiController extends Controller
             $response->imageUrl = $this->getQuotesImageUrl($quote->image);
             $response->caption = $quote->caption;
             $response->dateAdded = $quote->created_at->format('d-M-y h:i A');
-            $response->tags = explode(',', $quote->tags);
+            $response->tags = trim($quote->tags) != "" ? explode(',', $quote->tags) : array();
 
             $author = Author::where('id', $quote->user_id)
                 ->where('active', 1)
@@ -587,18 +587,18 @@ class ApiController extends Controller
             $response->language = $languageObject;
 
             $categories = DB::table("quote_categories")
-                ->leftJoin('categories', 'quotes_categories.category_id', '=', 'categories.id')
+                ->leftJoin('categories', 'quote_categories.category_id', '=', 'categories.id')
                 ->select('categories.*')
-                ->where("categories.active", 1)
+                ->where("quote_categories.quote_id", $quote->id)
+                ->where("quote.active", 1)
                 ->get();
 
             foreach ($categories as $category) {
                 $categoryObject = app()->make('stdClass');
                 $categoryObject->id = (string)$category->id;
                 $categoryObject->name = $category->name;
-                $categories[] = $categoryObject;
+                $response->categories[] = $categoryObject;
             }
-            $response->categories = $categories;
 
             $apiResponse->setResponse($response);
 
@@ -647,14 +647,14 @@ class ApiController extends Controller
                 $commentObject = app()->make('stdClass');
 
                 $commentObject->id = (string)$comment->id;
-                $commentObject->comment = $comment->comment;
+                $commentObject->comment = base64_decode($comment->comment);
                 $commentObject->dateAdded = date('d-M-y h:i A', strtotime($comment->created_at));
 
                 $authorObject = app()->make('stdClass');
 
                 $authorObject->id = (string)$comment->user_id;
                 $authorObject->name = $comment->user_name;
-                $authorObject->profileImage = $comment->user_profile_image;
+                $authorObject->profileImage = $this->getUsersImageUrl($comment->user_profile_image);
 
                 $commentObject->author = $authorObject;
 
@@ -1086,7 +1086,7 @@ class ApiController extends Controller
 
             $comment->quote_id = $request->get("quoteId");
             $comment->user_id = $request->get("authorId");
-            $comment->comment = $request->get("comment");
+            $comment->comment = base64_encode($request->get("comment"));
             $comment->save();
 
             $apiResponse->setResponse($response);
