@@ -466,8 +466,10 @@ class ApiController extends Controller
                 $quoteObject = app()->make('stdClass');
 
                 $quoteObject->id = (string)$quote->id;
-                $quoteObject->totalLikes = (string)$quote->total_likes;
-                $quoteObject->totalComments = (string)$quote->total_comments;
+                /*$quoteObject->totalLikes = (string)$quote->total_likes;
+                $quoteObject->totalComments = (string)$quote->total_comments;*/
+                $response->totalLikes = (string)QuoteLike::where('quote_id', $quote->id)->count();;
+                $response->totalComments = (string)Comment::where('quote_id', $quote->id)->where('active', 1)->count();;
                 $quoteObject->totalViews = (string)$quote->total_views;
 
                 $isLiked = QuoteLike::where('quote_id', $quote->id)
@@ -1157,7 +1159,7 @@ class ApiController extends Controller
             } else {
                 throw new \Exception("Oops! something went wrong. Please try again");
             }
-
+            $response->id = (string)$quote->id;
             $apiResponse->setResponse($response);
 
             return $apiResponse->outputResponse($apiResponse);
