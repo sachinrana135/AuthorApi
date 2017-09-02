@@ -344,8 +344,6 @@ class ApiController extends Controller
 
             $quotes = $sql->distinct()->get();
 
-            dd($quotes);
-
             foreach ($quotes as $quote) {
 
                 $quoteObject = app()->make('stdClass');
