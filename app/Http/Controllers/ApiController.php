@@ -206,14 +206,19 @@ class ApiController extends Controller
                 $followers = Follower::where('user_id', $authorID)
                     ->paginate(10, ['*'], 'page', $page);
 
-                foreach ($followers as $follower) {
+                foreach ($followers as $follower_id) {
 
-                    if ($follower->Follower != null) {
+                    $follower = Author::where('id', $follower_id)
+                        ->where('active', 1)
+                        ->select('id', 'name', 'profile_image')
+                        ->first();
+
+                    if ($follower != null) {
                         $authorObject = app()->make('stdClass');
 
-                        $authorObject->id = (string)$follower->Follower->id;
-                        $authorObject->name = $follower->Follower->name;
-                        $authorObject->profileImage = $follower->Follower->profile_image;
+                        $authorObject->id = (string)$follower->id;
+                        $authorObject->name = $follower->name;
+                        $authorObject->profileImage = $follower->profile_image;
 
                         $isFollowing = Follower::where('user_id', $follower->Follower->id)
                             ->where('follower_id', $loggedAuthorID)
@@ -232,17 +237,23 @@ class ApiController extends Controller
                 $following = Follower::where('follower_id', $authorID)
                     ->paginate(10, ['*'], 'page', $page);
 
-                foreach ($following as $author) {
-                    if ($author->Following != null) {
+                foreach ($following as $following_id) {
+
+                    $following = Author::where('id', $following_id)
+                        ->where('active', 1)
+                        ->select('id', 'name', 'profile_image')
+                        ->first();
+
+                    if ($following != null) {
                         $authorObject = app()->make('stdClass');
-                        $authorObject->id = (string)$author->Following->id;;
-                        $authorObject->name = $author->Following->name;
-                        $authorObject->profileImage = $author->Following->profile_image;
+                        $authorObject->id = (string)$following->id;;
+                        $authorObject->name = $following->name;
+                        $authorObject->profileImage = $following->profile_image;
 
                         if ($loggedAuthorID == $authorID) { // User is seeing whom he followings
                             $authorObject->followingAuthor = true;
                         } else { // User is seeing other user followers
-                            $isFollowing = Follower::where('user_id', $author->Following->id)
+                            $isFollowing = Follower::where('user_id', $following->id)
                                 ->where('follower_id', $loggedAuthorID)
                                 ->first();
 
@@ -349,8 +360,12 @@ class ApiController extends Controller
                 $quoteObject = app()->make('stdClass');
 
                 $quoteObject->id = (string)$quote->id;
-                $quoteObject->totalLikes = (string)$quote->total_likes;
+                /*$quoteObject->totalLikes = (string)$quote->total_likes;
                 $quoteObject->totalComments = (string)$quote->total_comments;
+                $quoteObject->totalViews = (string)$quote->total_views;*/
+
+                $quoteObject->totalLikes = (string)QuoteLike::where('quote_id', $quote->id)->count();
+                $quoteObject->totalComments = (string)Comment::where('quote_id', $quote->id)->where('active', 1)->count();
                 $quoteObject->totalViews = (string)$quote->total_views;
 
                 $isLiked = QuoteLike::where('quote_id', $quote->id)
@@ -512,8 +527,12 @@ class ApiController extends Controller
             }
 
             $response->id = (string)$quote->id;
-            $response->totalLikes = (string)$quote->total_likes;
-            $response->totalComments = (string)$quote->total_comments;
+            /*$response->totalLikes = (string)$quote->total_likes;
+            $response->totalComments = (string)$quote->total_comments;*/
+
+            $response->totalLikes = (string)QuoteLike::where('quote_id', $quote->id)->count();;
+            $response->totalComments = (string)Comment::where('quote_id', $quote->id)->where('active', 1)->count();;
+
             $response->totalViews = (string)$quote->total_views;
 
             $isLiked = QuoteLike::where('quote_id', $quoteId)
@@ -533,14 +552,19 @@ class ApiController extends Controller
             $response->dateAdded = $quote->created_at->format('d-M-y h:i A');
             $response->tags = explode(',', $quote->tags);
 
-            if ($quote->Author == null) {
+            $author = Author::where('id', $quote->user_id)
+                ->where('active', 1)
+                ->select('id', 'name', 'profile_image')
+                ->first();
+
+            if ($author == null) {
                 throw new \Exception("Author not found");
             }
             $response->author = app()->make('stdClass');
-            $response->author->id = (string)$quote->Author->id;
-            $response->author->name = $quote->Author->name;
+            $response->author->id = (string)$author->id;
+            $response->author->name = $author->name;
 
-            $isFollowing = Follower::where('user_id', $quote->Author->id)
+            $isFollowing = Follower::where('user_id', $author->id)
                 ->where('follower_id', $loggedAuthorID)
                 ->first();
 
@@ -549,18 +573,26 @@ class ApiController extends Controller
             } else {
                 $response->author->followingAuthor = false;
             }
-            $response->author->profileImage = $this->getUsersImageUrl($quote->Author->profile_image);
+            $response->author->profileImage = $this->getUsersImageUrl($author->profile_image);
+
+            $language = Language::where('active', 1)
+                ->where('id', $quote->language_id)
+                ->first();
 
             $languageObject = app()->make('stdClass');
 
-            $languageObject->languageId = (string)$quote->Language->id;
-            $languageObject->languageName = $quote->Language->name;
+            $languageObject->languageId = (string)$language->id;
+            $languageObject->languageName = $language->name;
 
             $response->language = $languageObject;
 
-            $categories = array();
+            $categories = DB::table("quote_categories")
+                ->leftJoin('categories', 'quotes_categories.category_id', '=', 'categories.id')
+                ->select('categories.*')
+                ->where("categories.active", 1)
+                ->get();
 
-            foreach ($quote->Categories as $category) {
+            foreach ($categories as $category) {
                 $categoryObject = app()->make('stdClass');
                 $categoryObject->id = (string)$category->id;
                 $categoryObject->name = $category->name;
@@ -569,6 +601,11 @@ class ApiController extends Controller
             $response->categories = $categories;
 
             $apiResponse->setResponse($response);
+
+            //increment view
+
+            Quote::where('id', $quote->id)
+                ->update(['total_views' => $quote->total_views + 1]);
 
             return $apiResponse->outputResponse($apiResponse);
 
