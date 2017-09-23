@@ -322,10 +322,10 @@ class ApiController extends Controller
         if ($ratio_orig >= 1) {
 
             $new_width = $width;
-            $new_height = intValue($new_width / $ratio_orig);
+            $new_height = (int)($new_width / $ratio_orig);
         } else {
             $new_width = $width;
-            $new_height = intValue($new_width * $ratio_orig);
+            $new_height = (int)($new_width * $ratio_orig);
         }
 
         $thumbnail_file_name = utf8_substr($file_name, 0, utf8_strrpos($file_name, '.')) . "-" . $new_width . "x" . $new_height . '.' . $extension;
