@@ -439,6 +439,7 @@ class ApiController extends Controller
                 $quoteObject->isCopyrighted = $quote->is_copyright ? true : false;
                 $quoteObject->source = $quote->source;
                 $quoteObject->imageUrl = $this->getQuoteThumbnailUrl($quote->image, false, 500, 500);
+                $quoteObject->originalImageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
                 $quoteObject->caption = base64_decode($quote->caption_encoded);
                 $quoteObject->dateAdded = date('d-M-y h:i A', strtotime($quote->created_at));
                 $quoteObject->tags = explode(',', $quote->tags);
@@ -523,6 +524,7 @@ class ApiController extends Controller
                 $quoteObject->isCopyrighted = $quote->is_copyright ? true : false;
                 $quoteObject->source = $quote->source;
                 $quoteObject->imageUrl = $this->getQuoteThumbnailUrl($quote->image, false, 500, 500);
+                $quoteObject->originalImageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
                 $quoteObject->caption = base64_decode($quote->caption_encoded);
                 $quoteObject->dateAdded = date('d-M-y h:i A', strtotime($quote->created_at));
                 $quoteObject->tags = explode(',', $quote->tags);
@@ -558,7 +560,7 @@ class ApiController extends Controller
         }
     }
 
-    public function getQuoteThumbnailUrl($file_name, $is_original, $width, $height)
+    public function getQuoteThumbnailUrl($file_name, $is_original, $width = 1000, $height = 1000)
     {
 
         $original_file_path = config('app.dir_image') . config('app.dir_quotes_image') . $file_name;
@@ -621,6 +623,7 @@ class ApiController extends Controller
             $response->isCopyrighted = $quote->is_copyright ? true : false;
             $response->source = $quote->source;
             $response->imageUrl = $this->getQuoteThumbnailUrl($quote->image, false, 1000, 1000);
+            $response->originalImageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
             $response->caption = base64_decode($quote->caption_encoded);
             $response->dateAdded = $quote->created_at->format('d-M-y h:i A');
             $response->tags = trim($quote->tags) != "" ? explode(',', $quote->tags) : array();
