@@ -289,17 +289,53 @@ class ApiController extends Controller
             ->select('firebase_profile_image', 'profile_image')
             ->first();
         if ($author->profile_image == null && $author->firebase_profile_image == null) {
-            return $this->getUsersImageUrl(config('app.default_profile_image'));
+            return $this->getDefaultProfileImage();
         } else if ($author->profile_image == null) {
             return $author->firebase_profile_image;
         } else {
-            return $this->getUsersImageUrl($author->profile_image);
+            return $this->getAuthorThumbnailUrl($author->profile_image, false, 200, 200);
         }
     }
 
-    public function getUsersImageUrl($imagePath)
+    public function getDefaultProfileImage()
     {
-        return asset(config('app.dir_image') . config('app.dir_users_image') . $imagePath);
+        return asset(config('app.dir_image') . config('app.dir_users_image') . config('app.default_profile_image'));
+    }
+
+    public function getAuthorThumbnailUrl($file_name, $is_original = false, $width, $height)
+    {
+        $original_file_path = config('app.dir_image') . config('app.dir_users_image') . $file_name;
+
+        if ($is_original) {
+            return asset($original_file_path);
+        }
+
+        $info = pathinfo($file_name);
+
+        $extension = $info['extension'];
+
+        //getting the image dimensions
+        list($width_orig, $height_orig) = getimagesize($original_file_path);
+        // Find the original ratio
+        $ratio_orig = $width_orig / $height_orig;
+
+        // Check whether to scale initially by height or by width
+        if ($width / $height > $ratio_orig) {
+            $new_height = $width / $ratio_orig;
+            $new_width = $width;
+        } else {
+            $new_width = $height * $ratio_orig;
+            $new_height = $height;
+        }
+
+        $thumbnail_file_name = utf8_substr($file_name, 0, utf8_strrpos($file_name, '.')) . "-" . $new_width . "x" . $new_height . '.' . $extension;
+
+        $thumbnail_file_path = config('app.dir_image') . config('app.dir_thumbnails') . $thumbnail_file_name;
+
+        if (!file_exists($thumbnail_file_path)) {
+            Image::make($original_file_path)->resize($new_width, $new_height)->save($thumbnail_file_path);
+        }
+        return asset($thumbnail_file_path);
     }
 
     public function getQuotes(Request $request)
@@ -402,8 +438,8 @@ class ApiController extends Controller
 
                 $quoteObject->isCopyrighted = $quote->is_copyright ? true : false;
                 $quoteObject->source = $quote->source;
-                $quoteObject->imageUrl = $this->getQuotesImageUrl($quote->image);
-                $quoteObject->caption = base64_decode($quote->caption);
+                $quoteObject->imageUrl = $this->getQuoteThumbnailUrl($quote->image, false, 500, 500);
+                $quoteObject->caption = base64_decode($quote->caption_encoded);
                 $quoteObject->dateAdded = date('d-M-y h:i A', strtotime($quote->created_at));
                 $quoteObject->tags = explode(',', $quote->tags);
 
@@ -486,8 +522,8 @@ class ApiController extends Controller
 
                 $quoteObject->isCopyrighted = $quote->is_copyright ? true : false;
                 $quoteObject->source = $quote->source;
-                $quoteObject->imageUrl = $this->getQuotesImageUrl($quote->image);
-                $quoteObject->caption = base64_decode($quote->caption);
+                $quoteObject->imageUrl = $this->getQuoteThumbnailUrl($quote->image, false, 500, 500);
+                $quoteObject->caption = base64_decode($quote->caption_encoded);
                 $quoteObject->dateAdded = date('d-M-y h:i A', strtotime($quote->created_at));
                 $quoteObject->tags = explode(',', $quote->tags);
 
@@ -522,9 +558,27 @@ class ApiController extends Controller
         }
     }
 
-    public function getQuotesImageUrl($imagePath)
+    public function getQuoteThumbnailUrl($file_name, $is_original, $width, $height)
     {
-        return asset(config('app.dir_image') . config('app.dir_quotes_image') . $imagePath);
+
+        $original_file_path = config('app.dir_image') . config('app.dir_quotes_image') . $file_name;
+
+        if ($is_original) {
+            return asset($original_file_path);
+        }
+
+        $info = pathinfo($file_name);
+
+        $extension = $info['extension'];
+
+        $thumbnail_file_name = utf8_substr($file_name, 0, utf8_strrpos($file_name, '.')) . "-" . $width . "x" . $height . '.' . $extension;
+
+        $thumbnail_file_path = config('app.dir_image') . config('app.dir_thumbnails') . $thumbnail_file_name;
+
+        if (!file_exists($thumbnail_file_path)) {
+            Image::make($original_file_path)->resize($width, $height)->save($thumbnail_file_path);
+        }
+        return asset($thumbnail_file_path);
     }
 
     public function getQuote(Request $request)
@@ -566,8 +620,8 @@ class ApiController extends Controller
 
             $response->isCopyrighted = $quote->is_copyright ? true : false;
             $response->source = $quote->source;
-            $response->imageUrl = $this->getQuotesImageUrl($quote->image);
-            $response->caption = base64_decode($quote->caption);
+            $response->imageUrl = $this->getQuoteThumbnailUrl($quote->image, false, 1000, 1000);
+            $response->caption = base64_decode($quote->caption_encoded);
             $response->dateAdded = $quote->created_at->format('d-M-y h:i A');
             $response->tags = trim($quote->tags) != "" ? explode(',', $quote->tags) : array();
 
@@ -943,10 +997,15 @@ class ApiController extends Controller
             ->first();
 
         if ($author->cover_image == null) {
-            return $this->getUsersImageUrl(config('app.default_cover_image'));
+            return $this->getDefaultCoverImage();
         } else {
-            return $this->getUsersImageUrl($author->cover_image);
+            return $this->getAuthorThumbnailUrl($author->cover_image, false, 1000, 800);
         }
+    }
+
+    public function getDefaultCoverImage()
+    {
+        return asset(config('app.dir_image') . config('app.dir_users_image') . config('app.default_cover_image'));
     }
 
     public function updateAuthor(Request $request)
@@ -1007,6 +1066,8 @@ class ApiController extends Controller
 
             $result = file_put_contents(config('app.dir_image') . config('app.dir_users_image') . $file_name, $profile_image);
 
+            $this->generateAuthorThumbnails($file_name, "profile");
+
             if ($result) {
                 $author->profile_image = $file_name;
                 $author->save();
@@ -1023,6 +1084,63 @@ class ApiController extends Controller
             $apiResponse->error->setMessage($e->getMessage());
             return $apiResponse->outputResponse($apiResponse);
 
+        }
+    }
+
+    public function generateAuthorThumbnails($file_name, $type)
+    {
+        if ($type = "profile") {
+            $thumbnail_sizes = array(
+                array(
+                    "width" => 200,
+                    "height" => 200
+                ),
+                array(
+                    "width" => 500,
+                    "height" => 500
+                )
+            );
+        } else if ($type == "cover") {
+            $thumbnail_sizes = array(
+                array(
+                    "width" => 1000,
+                    "height" => 800
+                ),
+                array(
+                    "width" => 700,
+                    "height" => 550
+                )
+            );
+        }
+
+        $original_file_path = config('app.dir_image') . config('app.dir_users_image') . $file_name;
+
+        $info = pathinfo($file_name);
+
+        $extension = $info['extension'];
+
+        //getting the image dimensions
+        list($width_orig, $height_orig) = getimagesize($original_file_path);
+        // Find the original ratio
+        $ratio_orig = $width_orig / $height_orig;
+
+
+        foreach ($thumbnail_sizes as $thumbnail_size) {
+
+            // Check whether to scale initially by height or by width
+            if ($thumbnail_size['width'] / $thumbnail_size['height'] > $ratio_orig) {
+                $new_height = $thumbnail_size['width'] / $ratio_orig;
+                $new_width = $thumbnail_size['width'];
+            } else {
+                $new_width = $thumbnail_size['height'] * $ratio_orig;
+                $new_height = $thumbnail_size['height'];
+            }
+
+            $thumbnail_file_name = utf8_substr($file_name, 0, utf8_strrpos($file_name, '.')) . "-" . $new_width . "x" . $new_height . '.' . $extension;
+
+            $thumbnail_file_path = config('app.dir_image') . config('app.dir_thumbnails') . $thumbnail_file_name;
+
+            Image::make($original_file_path)->resize($new_width, $new_height)->save($thumbnail_file_path);
         }
     }
 
@@ -1046,6 +1164,8 @@ class ApiController extends Controller
             $file_name = $author->id . "-" . time() . ".JPG";
 
             $result = file_put_contents(config('app.dir_image') . config('app.dir_users_image') . $file_name, $cover_image);
+
+            $this->generateAuthorThumbnails($file_name, "cover");
 
             if ($result) {
                 $author->cover_image = $file_name;
@@ -1139,16 +1259,17 @@ class ApiController extends Controller
             $quote->user_id = $quote_data->author->id;
             $quote->content = implode(',', $quote_data->content);
             $quote->language_id = $quote_data->language->languageId;
-            $quote->caption = base64_encode($quote_data->caption);
+            $quote->caption = $quote_data->caption;
+            $quote->caption_encoded = base64_encode($quote_data->caption);
             $quote->source = $quote_data->source;
             $quote->tags = implode(',', $quote_data->tags);
             $quote->is_copyright = $quote_data->isCopyrighted ? 1 : 0;
 
             $file_name = $quote_data->author->id . "-" . time() . ".JPG";
+            $file_path = config('app.dir_image') . config('app.dir_quotes_image') . $file_name;
 
-            $result = file_put_contents(config('app.dir_image') . config('app.dir_quotes_image') . $file_name, $quote_image);
-
-            $img = Image::make(config('app.dir_image') . config('app.dir_quotes_image') . $file_name)->resize(300, 300)->save(config('app.dir_image') . config('app.dir_quotes_image') . 'foo1.jpg');
+            $result = file_put_contents($file_path, $quote_image);
+            $this->generateQuoteThumbnails($file_name);
 
             if ($result) {
                 $quote->image = $file_name;
@@ -1176,6 +1297,44 @@ class ApiController extends Controller
         }
     }
 
+    public function generateQuoteThumbnails($file_name)
+    {
+
+        $thumbnail_sizes = array(
+            array(
+                "width" => 300,
+                "height" => 300
+            ),
+            array(
+                "width" => 500,
+                "height" => 500
+            ),
+            array(
+                "width" => 700,
+                "height" => 700
+            ),
+            array(
+                "width" => 1000,
+                "height" => 1000
+            ),
+        );
+
+        $original_file_path = config('app.dir_image') . config('app.dir_quotes_image') . $file_name;
+
+        $info = pathinfo($file_name);
+
+        $extension = $info['extension'];
+
+        foreach ($thumbnail_sizes as $thumbnail_size) {
+
+            $thumbnail_file_name = utf8_substr($file_name, 0, utf8_strrpos($file_name, '.')) . "-" . $thumbnail_size['width'] . "x" . $thumbnail_size['height'] . '.' . $extension;
+
+            $thumbnail_file_path = config('app.dir_image') . config('app.dir_thumbnails') . $thumbnail_file_name;
+
+            Image::make($original_file_path)->resize($thumbnail_size['width'], $thumbnail_size['height'])->save($thumbnail_file_path);
+        }
+    }
+
     public function reportComment(Request $request)
     {
         $apiResponse = new ApiResponse();
@@ -1199,6 +1358,11 @@ class ApiController extends Controller
             return $apiResponse->outputResponse($apiResponse);
 
         }
+    }
+
+    public function getQuotesImageUrl($imagePath)
+    {
+        return asset(config('app.dir_image') . config('app.dir_quotes_image') . $imagePath);
     }
 
 }

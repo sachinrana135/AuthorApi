@@ -23,7 +23,8 @@
             "App\\": "app/"
         },
 		"files": [
-            "app/ApiResponse.php"
+            "app/ApiResponse.php",
+            "app/Http/Helper.php"
         ]
     },
     "autoload-dev": {

@@ -131,6 +131,8 @@ return [
      */
     'dir_image' => "images/",
 
+    'dir_thumbnails' => "thumbnails/",
+
     'dir_quotes_image' => "quotes/",
 
     'dir_users_image' => "users/",
@@ -240,8 +242,7 @@ return [
         'URL' => Illuminate\Support\Facades\URL::class,
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
-        'Image' => Intervention\Image\Facades\Image::class
-
+        'Image' => Intervention\Image\Facades\Image::class,
     ],
 
 ];
