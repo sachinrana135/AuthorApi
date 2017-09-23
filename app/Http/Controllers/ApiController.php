@@ -21,6 +21,7 @@ use App\UserFeed;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Intervention\Image\Facades\Image;
 
 class ApiController extends Controller
 {
@@ -47,6 +48,7 @@ class ApiController extends Controller
                 $languageObject = app()->make('stdClass');
                 $languageObject->languageId = (string)$language->id;
                 $languageObject->languageName = $language->name;
+                $languageObject->languageIsoCode = $language->iso_639_1;
                 $response[] = $languageObject;
             }
 
@@ -1145,6 +1147,8 @@ class ApiController extends Controller
             $file_name = $quote_data->author->id . "-" . time() . ".JPG";
 
             $result = file_put_contents(config('app.dir_image') . config('app.dir_quotes_image') . $file_name, $quote_image);
+
+            $img = Image::make(config('app.dir_image') . config('app.dir_quotes_image') . $file_name)->resize(300, 300)->save(config('app.dir_image') . config('app.dir_quotes_image') . 'foo1.jpg');
 
             if ($result) {
                 $quote->image = $file_name;
