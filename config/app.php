@@ -137,6 +137,8 @@ return [
 
     'dir_users_image' => "users/",
 
+    'dir_canvas_image' => "canvas/",
+
     'default_profile_image' => "image1.jpg",
 
     'default_cover_image' => "image2.jpg",

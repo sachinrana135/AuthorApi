@@ -168,7 +168,7 @@ class ApiController extends Controller
             foreach ($canvasThemes as $canvasTheme) {
                 $canvasThemesObject = app()->make('stdClass');
                 $canvasThemesObject->id = (string)$canvasTheme->id;
-                $canvasThemesObject->imageUrl = $canvasTheme->image;
+                $canvasThemesObject->imageUrl = $this->getCanvasImageUrl($canvasTheme->image);
                 $canvasThemesObject->textColor = $canvasTheme->text_color;
                 $canvasThemesObject->textFontFamily = $canvasTheme->text_font_family;
                 $canvasThemesObject->textLocationX = $canvasTheme->text_location_x;
@@ -188,6 +188,11 @@ class ApiController extends Controller
             return $apiResponse->outputResponse($apiResponse);
 
         }
+    }
+
+    public function getCanvasImageUrl($imagePath)
+    {
+        return asset(config('app.dir_image') . config('app.dir_canvas_image') . $imagePath);
     }
 
     public function getAuthors(Request $request)
@@ -1361,11 +1366,6 @@ class ApiController extends Controller
             return $apiResponse->outputResponse($apiResponse);
 
         }
-    }
-
-    public function getQuotesImageUrl($imagePath)
-    {
-        return asset(config('app.dir_image') . config('app.dir_quotes_image') . $imagePath);
     }
 
 }
