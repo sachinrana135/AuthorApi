@@ -438,7 +438,7 @@ class ApiController extends Controller
 
                 $quoteObject->isCopyrighted = $quote->is_copyright ? true : false;
                 $quoteObject->source = $quote->source;
-                $quoteObject->imageUrl = $this->getQuoteThumbnailUrl($quote->image, false, 500, 500);
+                $quoteObject->imageUrl = $this->getQuoteThumbnailUrl($quote->image, false, 700, 700);
                 $quoteObject->originalImageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
                 $quoteObject->caption = base64_decode($quote->caption_encoded);
                 $quoteObject->dateAdded = date('d-M-y h:i A', strtotime($quote->created_at));
@@ -523,7 +523,7 @@ class ApiController extends Controller
 
                 $quoteObject->isCopyrighted = $quote->is_copyright ? true : false;
                 $quoteObject->source = $quote->source;
-                $quoteObject->imageUrl = $this->getQuoteThumbnailUrl($quote->image, false, 500, 500);
+                $quoteObject->imageUrl = $this->getQuoteThumbnailUrl($quote->image, false, 700, 700);
                 $quoteObject->originalImageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
                 $quoteObject->caption = base64_decode($quote->caption_encoded);
                 $quoteObject->dateAdded = date('d-M-y h:i A', strtotime($quote->created_at));
@@ -622,7 +622,7 @@ class ApiController extends Controller
 
             $response->isCopyrighted = $quote->is_copyright ? true : false;
             $response->source = $quote->source;
-            $response->imageUrl = $this->getQuoteThumbnailUrl($quote->image, false, 1000, 1000);
+            $response->imageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
             $response->originalImageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
             $response->caption = base64_decode($quote->caption_encoded);
             $response->dateAdded = $quote->created_at->format('d-M-y h:i A');
@@ -1092,7 +1092,7 @@ class ApiController extends Controller
 
     public function generateAuthorThumbnails($file_name, $type)
     {
-        if ($type = "profile") {
+        if ($type == "profile") {
             $thumbnail_sizes = array(
                 array(
                     "width" => 200,
@@ -1130,14 +1130,14 @@ class ApiController extends Controller
 
         foreach ($thumbnail_sizes as $thumbnail_size) {
 
-            // Check whether to scale initially by height or by width
-            if ($thumbnail_size['width'] / $thumbnail_size['height'] > $ratio_orig) {
-                $new_height = $thumbnail_size['width'] / $ratio_orig;
+            if ($ratio_orig >= 1) {
                 $new_width = $thumbnail_size['width'];
+                $new_height = (int)($new_width / $ratio_orig);
             } else {
-                $new_width = $thumbnail_size['height'] * $ratio_orig;
-                $new_height = $thumbnail_size['height'];
+                $new_width = $thumbnail_size['height'];
+                $new_height = (int)($new_width * $ratio_orig);
             }
+
 
             $thumbnail_file_name = utf8_substr($file_name, 0, utf8_strrpos($file_name, '.')) . "-" . $new_width . "x" . $new_height . '.' . $extension;
 
