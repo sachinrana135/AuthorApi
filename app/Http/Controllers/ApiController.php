@@ -371,7 +371,7 @@ class ApiController extends Controller
             if (isset($filterObject->searchKeyword)) {
                 $sql->where(function ($query) use ($filterObject) {
                     $query->orWhere('tags', 'like', '%' . $filterObject->searchKeyword . '%')
-                        ->orWhere('caption', 'like', '%' . $filterObject->searchKeyword . '%')
+                        //->orWhere('caption', 'like', '%' . $filterObject->searchKeyword . '%')
                         ->orWhere('content', 'like', '%' . $filterObject->searchKeyword . '%');
                 });
             }
@@ -445,7 +445,7 @@ class ApiController extends Controller
                 $quoteObject->source = $quote->source;
                 $quoteObject->imageUrl = $this->getQuoteThumbnailUrl($quote->image, false, 700, 700);
                 $quoteObject->originalImageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
-                $quoteObject->caption = base64_decode($quote->caption_encoded);
+                $quoteObject->caption = base64_decode($quote->caption);
                 $quoteObject->dateAdded = date('d-M-y h:i A', strtotime($quote->created_at));
                 $quoteObject->tags = explode(',', $quote->tags);
 
@@ -530,7 +530,7 @@ class ApiController extends Controller
                 $quoteObject->source = $quote->source;
                 $quoteObject->imageUrl = $this->getQuoteThumbnailUrl($quote->image, false, 700, 700);
                 $quoteObject->originalImageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
-                $quoteObject->caption = base64_decode($quote->caption_encoded);
+                $quoteObject->caption = base64_decode($quote->caption);
                 $quoteObject->dateAdded = date('d-M-y h:i A', strtotime($quote->created_at));
                 $quoteObject->tags = explode(',', $quote->tags);
 
@@ -629,7 +629,7 @@ class ApiController extends Controller
             $response->source = $quote->source;
             $response->imageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
             $response->originalImageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
-            $response->caption = base64_decode($quote->caption_encoded);
+            $response->caption = base64_decode($quote->caption);
             $response->dateAdded = $quote->created_at->format('d-M-y h:i A');
             $response->tags = trim($quote->tags) != "" ? explode(',', $quote->tags) : array();
 
@@ -1267,8 +1267,7 @@ class ApiController extends Controller
             $quote->user_id = $quote_data->author->id;
             $quote->content = implode(',', $quote_data->content);
             $quote->language_id = $quote_data->language->languageId;
-            $quote->caption = $quote_data->caption;
-            $quote->caption_encoded = base64_encode($quote_data->caption);
+            $quote->caption = base64_encode($quote_data->caption);
             $quote->source = $quote_data->source;
             $quote->tags = implode(',', $quote_data->tags);
             $quote->is_copyright = $quote_data->isCopyrighted ? 1 : 0;
