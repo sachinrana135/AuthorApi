@@ -371,8 +371,8 @@ class ApiController extends Controller
             if (isset($filterObject->searchKeyword)) {
                 $sql->where(function ($query) use ($filterObject) {
                     $query->orWhere('tags', 'like', '%' . $filterObject->searchKeyword . '%')
-                        ->orWhereRaw('FROM_BASE64(caption)', 'like', '%' . $filterObject->searchKeyword . '%')
-                        ->orWhereRaw('FROM_BASE64(content)', 'like', '%' . $filterObject->searchKeyword . '%');
+                        ->orWhereRaw("FROM_BASE64(caption) like '%".$filterObject->searchKeyword."%'")
+                        ->orWhereRaw("FROM_BASE64(content) like '%".$filterObject->searchKeyword."%'");
                 });
             }
 
@@ -443,7 +443,8 @@ class ApiController extends Controller
 
                 $quoteObject->isCopyrighted = $quote->is_copyright ? true : false;
                 $quoteObject->source = $quote->source;
-                $quoteObject->imageUrl = $this->getQuoteThumbnailUrl($quote->image, false, 700, 700);
+                //$quoteObject->imageUrl = $this->getQuoteThumbnailUrl($quote->image, false, 700, 700);
+                $quoteObject->imageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
                 $quoteObject->originalImageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
                 $quoteObject->caption = base64_decode($quote->caption);
                 $quoteObject->dateAdded = date('d-M-y h:i A', strtotime($quote->created_at));
@@ -528,7 +529,8 @@ class ApiController extends Controller
 
                 $quoteObject->isCopyrighted = $quote->is_copyright ? true : false;
                 $quoteObject->source = $quote->source;
-                $quoteObject->imageUrl = $this->getQuoteThumbnailUrl($quote->image, false, 700, 700);
+                //$quoteObject->imageUrl = $this->getQuoteThumbnailUrl($quote->image, false, 700, 700);
+                $quoteObject->imageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
                 $quoteObject->originalImageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
                 $quoteObject->caption = base64_decode($quote->caption);
                 $quoteObject->dateAdded = date('d-M-y h:i A', strtotime($quote->created_at));
@@ -1308,14 +1310,16 @@ class ApiController extends Controller
     {
 
         $thumbnail_sizes = array(
-            array(
+            /*array(
                 "width" => 300,
                 "height" => 300
             ),
+                         
             array(
                 "width" => 500,
                 "height" => 500
-            ),
+            ),             
+             */
             array(
                 "width" => 700,
                 "height" => 700
