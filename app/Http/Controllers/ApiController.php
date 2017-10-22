@@ -371,8 +371,8 @@ class ApiController extends Controller
             if (isset($filterObject->searchKeyword)) {
                 $sql->where(function ($query) use ($filterObject) {
                     $query->orWhere('tags', 'like', '%' . $filterObject->searchKeyword . '%')
-                        //->orWhere('caption', 'like', '%' . $filterObject->searchKeyword . '%')
-                        ->orWhere('content', 'like', '%' . $filterObject->searchKeyword . '%');
+                        ->orWhereRaw('FROM_BASE64(caption)', 'like', '%' . $filterObject->searchKeyword . '%')
+                        ->orWhereRaw('FROM_BASE64(content)', 'like', '%' . $filterObject->searchKeyword . '%');
                 });
             }
 
@@ -1265,7 +1265,7 @@ class ApiController extends Controller
             $quote = new Quote();
 
             $quote->user_id = $quote_data->author->id;
-            $quote->content = implode(',', $quote_data->content);
+            $quote->content = base64_encode(implode(',', $quote_data->content));
             $quote->language_id = $quote_data->language->languageId;
             $quote->caption = base64_encode($quote_data->caption);
             $quote->source = $quote_data->source;
