@@ -1304,6 +1304,36 @@ class ApiController extends Controller
             return $apiResponse->outputResponse($apiResponse);
 
         }
+    }     
+
+    public function deleteQuote(Request $request)
+    {
+        $apiResponse = new ApiResponse();
+        try {
+
+            $response = app()->make('stdClass');
+
+            $authorID = $request->get("authorId");
+            $quoteID = $request->get("quoteId");
+
+            $quote = Quote::where('quote_id', $quoteID)
+                ->where('user_id', $authorID)
+                ->first();
+            
+            if ($quote != null) {
+                $quote->delete();
+            }
+            
+            $apiResponse->setResponse($response);
+
+            return $apiResponse->outputResponse($apiResponse);
+
+        } catch (\Exception $e) {
+            $apiResponse->error->setType(config('api.error_type_dialog'));
+            $apiResponse->error->setMessage($e->getMessage());
+            return $apiResponse->outputResponse($apiResponse);
+
+        }
     }
 
     public function generateQuoteThumbnails($file_name)
