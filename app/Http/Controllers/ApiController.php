@@ -1054,6 +1054,37 @@ class ApiController extends Controller
 
         }
     }
+    
+    public function mapFcmIdToUser(Request $request)
+    {
+        $apiResponse = new ApiResponse();
+        try {
+
+            $response = app()->make('stdClass');
+
+            $authorId = $request->get("authorId");
+
+            $author = Author::find($authorId);
+            
+            if ($author == null) {
+                throw new \Exception("Author not found");
+            }
+
+            $author->fcmId = $request->get("fcmId");                
+            $author->save();
+
+            $apiResponse->setResponse($response);
+
+            return $apiResponse->outputResponse($apiResponse);
+
+
+        } catch (\Exception $e) {
+            $apiResponse->error->setType(config('api.error_type_dialog'));
+            $apiResponse->error->setMessage($e->getMessage());
+            return $apiResponse->outputResponse($apiResponse);
+
+        }
+    }   
 
     public function updateProfileImage(Request $request)
     {
