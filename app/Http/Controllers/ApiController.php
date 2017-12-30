@@ -1347,7 +1347,7 @@ class ApiController extends Controller
             $authorID = $request->get("authorId");
             $quoteID = $request->get("quoteId");
 
-            $quote = Quote::where('quote_id', $quoteID)
+            $quote = Quote::where('id', $quoteID)
                 ->where('user_id', $authorID)
                 ->first();
             
