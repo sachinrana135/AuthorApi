@@ -1351,8 +1351,10 @@ class ApiController extends Controller
                 ->where('user_id', $authorID)
                 ->first();
             
-            if ($quote != null) {
-                $quote->delete();
+            if ($quote != null) {               
+                $quote->is_deleted = 1;                
+                $quote->active = 0;                
+                $quote->save();
             }
             
             $apiResponse->setResponse($response);
