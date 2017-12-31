@@ -164,6 +164,7 @@ class ApiController extends Controller
             $response = array();
 
             $canvasThemes = CanvasTheme::where('active', 1)
+                ->orderBy('sort_order', 'asc')
                 ->paginate(10);
 
             foreach ($canvasThemes as $canvasTheme) {
