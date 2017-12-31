@@ -39,4 +39,6 @@ Route::post('/updateUserCountry', 'ApiController@updateUserCountry');
 Route::post('/saveComment', 'ApiController@saveComment');
 Route::post('/saveQuote', 'ApiController@saveQuote');
 Route::post('/getUserFeed', 'ApiController@getUserFeed');
+Route::post('/deleteQuote', 'ApiController@deleteQuote');
+Route::post('/mapFcmIdToUser', 'ApiController@mapFcmIdToUser');
 

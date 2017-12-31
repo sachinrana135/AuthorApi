@@ -18,6 +18,7 @@ use App\QuoteLike;
 use App\QuoteReport;
 use App\ReportReason;
 use App\UserFeed;
+use App\PushMessage;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -163,6 +164,7 @@ class ApiController extends Controller
             $response = array();
 
             $canvasThemes = CanvasTheme::where('active', 1)
+                ->orderBy('sort_order', 'asc')
                 ->paginate(10);
 
             foreach ($canvasThemes as $canvasTheme) {
@@ -714,6 +716,7 @@ class ApiController extends Controller
                 ->select('comments.*', 'users.name as user_name', 'users.profile_image as user_profile_image');
 
             $sql->where("users.active", 1);
+            $sql->where("comments.active", 1);
 
             if (isset($filterObject->quoteID)) {
                 $sql->where('comments.quote_id', $filterObject->quoteID);
@@ -768,6 +771,43 @@ class ApiController extends Controller
             $reportReasonID = $request->get("reportId");
 
             QuoteReport::firstOrCreate(['quote_id' => $quoteID, 'user_id' => $loggedAuthorID], ['report_reason_id' => $reportReasonID]);
+            
+            $quote = Quote::find($quoteID);           
+            if ($quote != null) {                               
+                /************** BOC- Enqueue push notification ************/
+                
+                try {
+                   $sql = DB::table("quotes")
+                        ->leftJoin('users', 'users.id', '=', 'quotes.user_id')
+                        ->select('users.fcmId');
+                    $sql->where("quotes.id", $quoteID);
+                    $sql->where("quotes.active", 1);
+                    $sql->where("users.active", 1);
+                    //Print SQL query
+                    //dd($sql->toSql());
+                    $result = $sql->first();  
+                    if($result != null){
+                        $fcmID = $result->fcmId;                    
+                        if($fcmID != null && !empty($fcmID)) {                        
+                            $pushMessage = new PushMessage();
+                            $pushMessage->target_type = config('api.target_type_single');
+                            $pushMessage->target_id = $fcmID;
+                            $pushMessage->title = config('strings.push_message_quote_report_title');
+                            $pushMessage->message = config('strings.push_message_quote_report_message');                                                                           
+                            $pushMessage->save();
+
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Do nothing                    
+                }
+                
+                $quote->active = "0";
+                $quote->save();
+
+
+                /************** EOC- Enqueue push notification ************/
+            }
 
             $apiResponse->setResponse($response);
 
@@ -794,11 +834,51 @@ class ApiController extends Controller
             $likeExist = QuoteLike::where('quote_id', $quoteID)
                 ->where('user_id', $loggedAuthorID)
                 ->first();
+            
             if ($likeExist == null) {
                 $quoteLike = new QuoteLike;
                 $quoteLike->quote_id = $quoteID;
                 $quoteLike->user_id = $loggedAuthorID;
                 $quoteLike->save();
+                
+                /************** BOC- Enqueue push notification ************/
+                
+                try {
+                   $sql = DB::table("quotes")
+                        ->leftJoin('users', 'users.id', '=', 'quotes.user_id')
+                        ->select('users.fcmId');
+                    $sql->where("quotes.id", $quoteID);
+                    $sql->where("quotes.active", 1);
+                    $sql->where("users.active", 1);
+                    //Print SQL query
+                    //dd($sql->toSql());
+                    $result = $sql->first();
+                    if($result != null){                    
+                        $fcmID = $result->fcmId;                    
+                        if($fcmID != null && !empty($fcmID)) {                        
+                            $pushMessage = new PushMessage();
+                            $pushMessage->target_type = config('api.target_type_single');
+                            $pushMessage->target_id = $fcmID;
+                            $pushMessage->title = config('strings.push_message_new_like_title');                        
+                            $pushMessage->message = config('strings.push_message_new_like_message');                        
+                            $pushMessage->push_type = config('api.push_type_quote');
+
+                            $data = array(
+                                "quoteId" => $quoteID
+                            );
+
+                            $pushMessage->data = json_encode($data);
+
+                            $pushMessage->save();
+
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Do nothing                    
+                }
+
+                /************** EOC- Enqueue push notification ************/
+                
             } else {
                 $likeExist->delete();
             }
@@ -950,6 +1030,7 @@ class ApiController extends Controller
 
             $response->status = base64_decode($author->status);
             $response->totalQuotes = Quote::where('user_id', $authorId)
+                ->where('active', "1")
                 ->count();
             $response->totalLikes = 0;
             $response->totalFollowers = DB::table("followers")
@@ -1054,6 +1135,37 @@ class ApiController extends Controller
 
         }
     }
+    
+    public function mapFcmIdToUser(Request $request)
+    {
+        $apiResponse = new ApiResponse();
+        try {
+
+            $response = app()->make('stdClass');
+
+            $authorId = $request->get("authorId");
+
+            $author = Author::find($authorId);
+            
+            if ($author == null) {
+                throw new \Exception("Author not found");
+            }
+
+            $author->fcmId = $request->get("fcmId");                
+            $author->save();
+
+            $apiResponse->setResponse($response);
+
+            return $apiResponse->outputResponse($apiResponse);
+
+
+        } catch (\Exception $e) {
+            $apiResponse->error->setType(config('api.error_type_dialog'));
+            $apiResponse->error->setMessage($e->getMessage());
+            return $apiResponse->outputResponse($apiResponse);
+
+        }
+    }   
 
     public function updateProfileImage(Request $request)
     {
@@ -1240,6 +1352,43 @@ class ApiController extends Controller
             $comment->user_id = $request->get("authorId");
             $comment->comment = base64_encode($request->get("comment"));
             $comment->save();
+            
+            /************** BOC- Enqueue push notification ************/
+                
+                try {
+                   $sql = DB::table("quotes")
+                        ->leftJoin('users', 'users.id', '=', 'quotes.user_id')
+                        ->select('users.fcmId');
+                    $sql->where("quotes.id", $request->get("quoteId"));
+                    $sql->where("quotes.active", 1);
+                    $sql->where("users.active", 1);
+                    //Print SQL query
+                    //dd($sql->toSql());
+                    $result = $sql->first();    
+                    if($result != null){
+                        $fcmID = $result->fcmId;                    
+                        if($fcmID != null && !empty($fcmID)) {                        
+                            $pushMessage = new PushMessage();
+                            $pushMessage->target_type = config('api.target_type_single');
+                            $pushMessage->target_id = $fcmID;
+                            $pushMessage->title = config('strings.push_message_new_comment_title');                        
+                            $pushMessage->message = config('strings.push_message_new_comment_message');                        
+                            $pushMessage->push_type = config('api.push_type_quote');
+
+                            $data = array(
+                                "quoteId" => $request->get("quoteId")
+                            );
+
+                            $pushMessage->data = json_encode($data);
+
+                            $pushMessage->save();
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Do nothing                    
+                }
+
+                /************** EOC- Enqueue push notification ************/
 
             $apiResponse->setResponse($response);
 
@@ -1304,6 +1453,38 @@ class ApiController extends Controller
             return $apiResponse->outputResponse($apiResponse);
 
         }
+    }     
+
+    public function deleteQuote(Request $request)
+    {
+        $apiResponse = new ApiResponse();
+        try {
+
+            $response = app()->make('stdClass');
+
+            $authorID = $request->get("authorId");
+            $quoteID = $request->get("quoteId");
+
+            $quote = Quote::where('id', $quoteID)
+                ->where('user_id', $authorID)
+                ->first();
+            
+            if ($quote != null) {               
+                $quote->is_deleted = 1;                
+                $quote->active = 0;                
+                $quote->save();
+            }
+            
+            $apiResponse->setResponse($response);
+
+            return $apiResponse->outputResponse($apiResponse);
+
+        } catch (\Exception $e) {
+            $apiResponse->error->setType(config('api.error_type_dialog'));
+            $apiResponse->error->setMessage($e->getMessage());
+            return $apiResponse->outputResponse($apiResponse);
+
+        }
     }
 
     public function generateQuoteThumbnails($file_name)
@@ -1358,6 +1539,41 @@ class ApiController extends Controller
             $reportReasonID = $request->get("reportId");
 
             CommentReport::firstOrCreate(['comment_id' => $commentID, 'user_id' => $loggedAuthorID], ['report_reason_id' => $reportReasonID]);
+            
+            $comment = Comment::find($commentID);           
+            if ($comment) {                                
+                /************** BOC- Enqueue push notification *********** */
+
+                try {
+                    $sql = DB::table("comments")
+                            ->leftJoin('users', 'users.id', '=', 'comments.user_id')
+                            ->select('users.fcmId');
+                    $sql->where("comments.id", $commentID);
+                    $sql->where("comments.active", 1);
+                    $sql->where("users.active", 1);
+                    //Print SQL query
+                    //dd($sql->toSql());
+                    $result = $sql->first();
+                    if($result != null){                    
+                        $fcmID = $result->fcmId;
+                        if ($fcmID != null && !empty($fcmID)) {
+                            $pushMessage = new PushMessage();
+                            $pushMessage->target_type = config('api.target_type_single');
+                            $pushMessage->target_id = $fcmID;
+                            $pushMessage->title = config('strings.push_message_comment_report_title');
+                            $pushMessage->message = config('strings.push_message_comment_report_message');
+                            $pushMessage->save();
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Do nothing                       
+                }
+                
+                $comment->active = "0";
+                $comment->save();
+
+                /************** EOC- Enqueue push notification *********** */
+            }
 
             $apiResponse->setResponse($response);
 

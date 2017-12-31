@@ -15,3 +15,4 @@ Route::get('/', function () {
     return view('welcome');
 });
 Route::get('/feedQuotes', 'ScheduledJobsController@feedQuotes');
+Route::get('/sendPushmessage', 'ScheduledJobsController@sendPushmessage');
