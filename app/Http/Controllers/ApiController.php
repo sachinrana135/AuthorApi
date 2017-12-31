@@ -716,6 +716,7 @@ class ApiController extends Controller
                 ->select('comments.*', 'users.name as user_name', 'users.profile_image as user_profile_image');
 
             $sql->where("users.active", 1);
+            $sql->where("comments.active", 1);
 
             if (isset($filterObject->quoteID)) {
                 $sql->where('comments.quote_id', $filterObject->quoteID);
@@ -799,6 +800,10 @@ class ApiController extends Controller
                 } catch (\Exception $e) {
                     // Do nothing                    
                 }
+                
+                $quote->active = "0";
+                $quote->save();
+
 
                 /************** EOC- Enqueue push notification ************/
             }
