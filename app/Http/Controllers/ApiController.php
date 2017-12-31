@@ -792,7 +792,8 @@ class ApiController extends Controller
                             $pushMessage = new PushMessage();
                             $pushMessage->target_type = config('api.target_type_single');
                             $pushMessage->target_id = $fcmID;
-                            $pushMessage->message = config('strings.push_message_quote_report');                                                                           
+                            $pushMessage->title = config('strings.push_message_quote_report_title');
+                            $pushMessage->message = config('strings.push_message_quote_report_message');                                                                           
                             $pushMessage->save();
 
                         }
@@ -858,7 +859,8 @@ class ApiController extends Controller
                             $pushMessage = new PushMessage();
                             $pushMessage->target_type = config('api.target_type_single');
                             $pushMessage->target_id = $fcmID;
-                            $pushMessage->message = config('strings.push_message_new_like');                        
+                            $pushMessage->title = config('strings.push_message_new_like_title');                        
+                            $pushMessage->message = config('strings.push_message_new_like_message');                        
                             $pushMessage->push_type = config('api.push_type_quote');
 
                             $data = array(
@@ -1369,7 +1371,8 @@ class ApiController extends Controller
                             $pushMessage = new PushMessage();
                             $pushMessage->target_type = config('api.target_type_single');
                             $pushMessage->target_id = $fcmID;
-                            $pushMessage->message = config('strings.push_message_new_comment');                        
+                            $pushMessage->title = config('strings.push_message_new_comment_title');                        
+                            $pushMessage->message = config('strings.push_message_new_comment_message');                        
                             $pushMessage->push_type = config('api.push_type_quote');
 
                             $data = array(
@@ -1557,7 +1560,8 @@ class ApiController extends Controller
                             $pushMessage = new PushMessage();
                             $pushMessage->target_type = config('api.target_type_single');
                             $pushMessage->target_id = $fcmID;
-                            $pushMessage->message = config('strings.push_message_comment_report');
+                            $pushMessage->title = config('strings.push_message_comment_report_title');
+                            $pushMessage->message = config('strings.push_message_comment_report_message');
                             $pushMessage->save();
                         }
                     }
