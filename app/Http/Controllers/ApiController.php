@@ -206,12 +206,14 @@ class ApiController extends Controller
 
             $filterObject = json_decode($request->get("authorFilters"));
             $loggedAuthorID = $request->get("loggedAuthorId");// use of this variable is to determine whether current logged user following others users
-
-            $authorID = $filterObject->authorID;
+            
             $filterType = $filterObject->filterType;//follower or following
             $page = $filterObject->page;// current page
 
             if ($filterType == "follower") {
+                
+                $authorID = $filterObject->authorID;
+                
                 $followers = Follower::where('user_id', $authorID)
                     ->paginate(10, ['*'], 'page', $page);
 
@@ -244,6 +246,9 @@ class ApiController extends Controller
 
 
             } else if ($filterType == "following") {
+                
+                $authorID = $filterObject->authorID;
+                
                 $following = Follower::where('follower_id', $authorID)
                     ->paginate(10, ['*'], 'page', $page);
 
@@ -264,6 +269,42 @@ class ApiController extends Controller
                             $authorObject->followingAuthor = true;
                         } else { // User is seeing other user followers
                             $isFollowing = Follower::where('user_id', $following->id)
+                                ->where('follower_id', $loggedAuthorID)
+                                ->first();
+
+                            if ($isFollowing != null) {
+                                $authorObject->followingAuthor = true;
+                            } else {
+                                $authorObject->followingAuthor = false;
+                            }
+                        }
+                        $response[] = $authorObject;
+                    }
+                }
+            } else if ($filterType == "quoteLikedBy") {
+                
+                $quoteId = $filterObject->quoteID;
+                
+                $authors = QuoteLike::where('quote_id', $quoteId)
+                    ->paginate(10, ['*'], 'page', $page);
+                
+                foreach ($authors as $user) {
+
+                    $author = Author::where('id', $user->user_id)
+                        ->where('active', 1)
+                        ->select('id', 'name', 'profile_image')
+                        ->first();
+
+                    if ($author != null) {
+                        $authorObject = app()->make('stdClass');
+                        $authorObject->id = (string)$author->id;
+                        $authorObject->name = $author->name;
+                        $authorObject->profileImage = $this->getUserProfileImageUrl($author->id);
+
+                        if ($loggedAuthorID == $authorObject->id) { // User is seeing whom he followings
+                            $authorObject->followingAuthor = true;
+                        } else { // User is seeing other user followers
+                            $isFollowing = Follower::where('user_id', $author->id)
                                 ->where('follower_id', $loggedAuthorID)
                                 ->first();
 
