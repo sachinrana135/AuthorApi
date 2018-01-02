@@ -282,6 +282,7 @@ class ApiController extends Controller
                     }
                 }
             } else if ($filterType == "quoteLikedBy") {
+                
                 $quoteId = $filterObject->quoteID;
                 
                 $authors = QuoteLike::where('quote_id', $quoteId)
@@ -289,21 +290,21 @@ class ApiController extends Controller
                 
                 foreach ($authors as $user) {
 
-                    $following = Author::where('id', $user->user_id)
+                    $author = Author::where('id', $user->user_id)
                         ->where('active', 1)
                         ->select('id', 'name', 'profile_image')
                         ->first();
 
-                    if ($following != null) {
+                    if ($author != null) {
                         $authorObject = app()->make('stdClass');
-                        $authorObject->id = (string)$following->id;
-                        $authorObject->name = $following->name;
-                        $authorObject->profileImage = $this->getUserProfileImageUrl($following->id);
+                        $authorObject->id = (string)$author->id;
+                        $authorObject->name = $author->name;
+                        $authorObject->profileImage = $this->getUserProfileImageUrl($author->id);
 
-                        if ($loggedAuthorID == $authorID) { // User is seeing whom he followings
+                        if ($loggedAuthorID == $authorObject->id) { // User is seeing whom he followings
                             $authorObject->followingAuthor = true;
                         } else { // User is seeing other user followers
-                            $isFollowing = Follower::where('user_id', $following->id)
+                            $isFollowing = Follower::where('user_id', $author->id)
                                 ->where('follower_id', $loggedAuthorID)
                                 ->first();
 
