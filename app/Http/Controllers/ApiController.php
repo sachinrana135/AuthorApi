@@ -429,6 +429,7 @@ class ApiController extends Controller
                     $sql->where('quotes.created_at', '>=', Carbon::now()->subDays(2));
                     $sql->orderBy('total_likes', 'desc');
                 } elseif ($filterObject->filterType == "popular") {
+                    $sql->where('quotes.created_at', '>=', Carbon::now()->subDays(20));
                     $sql->orderBy('total_views', 'desc');
                 } else {
                     $sql->orderBy('quotes.created_at', 'desc');
