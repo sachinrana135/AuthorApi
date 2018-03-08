@@ -10,7 +10,7 @@ return [
 
     'api_status' => 'true',
 
-    'api_token' => '02bd92faa38aaa6cc0ea75e59937a1ef',
+    'api_token' => 'be7a16fae793838c7ef167714ba36d2e',
 
     'app_min_version_support' => '1',
 
