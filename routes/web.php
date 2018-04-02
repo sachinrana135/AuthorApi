@@ -16,3 +16,8 @@ Route::get('/', function () {
 });
 Route::get('/feedQuotes', 'ScheduledJobsController@feedQuotes');
 Route::get('/sendPushmessage', 'ScheduledJobsController@sendPushmessage');
+Auth::routes();
+
+Route::get('/home', 'HomeController@index')->name('home');
+Route::get('/upgradeApp', 'AppWebviewController@upgradeApp');
+Route::get('/maintenanceApp', 'AppWebviewController@maintenanceApp');
