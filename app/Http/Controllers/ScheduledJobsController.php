@@ -70,6 +70,10 @@ class ScheduledJobsController extends Controller {
                     $data = json_decode($message->data);
                     $dataBuilder->addData(['pushType' => config('api.push_type_quote')]);
                     $dataBuilder->addData(['quoteId' => $data->quoteId]);
+                }else if ($message->push_type == config('api.push_type_author')) {
+                    $data = json_decode($message->data);
+                    $dataBuilder->addData(['pushType' => config('api.push_type_author')]);
+                    $dataBuilder->addData(['authorId' => $data->authorId]);
                 } else {
                     if (!empty($message->redirect_activity)) {
                         $dataBuilder->addData(['targetActivity' => $message->redirect_activity]);
