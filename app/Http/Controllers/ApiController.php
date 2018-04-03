@@ -909,6 +909,14 @@ class ApiController extends Controller
                 ->where('user_id', $loggedAuthorID)
                 ->first();
             
+            $author = Author::where('id', $loggedAuthorID)
+                ->where('active', 1)
+                ->first();
+
+            if ($author == null) {
+                throw new \Exception("Author not found");
+            }
+       
             if ($likeExist == null) {
                 $quoteLike = new QuoteLike;
                 $quoteLike->quote_id = $quoteID;
@@ -934,7 +942,7 @@ class ApiController extends Controller
                             $pushMessage->target_type = config('api.target_type_single');
                             $pushMessage->target_id = $fcmID;
                             $pushMessage->title = config('strings.push_message_new_like_title');                        
-                            $pushMessage->message = config('strings.push_message_new_like_message');                        
+                            $pushMessage->message = sprintf(config('strings.push_message_new_like_message'),$author->name);                        
                             $pushMessage->push_type = config('api.push_type_quote');
 
                             $data = array(
@@ -979,14 +987,48 @@ class ApiController extends Controller
             $authorID = $request->get("authorId");
 
             $isFollower = Follower::where('user_id', $authorID)
-                ->where('follower_id', $loggedAuthorID)
-                ->first();
+                    ->where('follower_id', $loggedAuthorID)
+                    ->first();
             if ($isFollower == null) {
                 $follower = new Follower();
                 $follower->user_id = $authorID;
                 $follower->follower_id = $loggedAuthorID;
                 $follower->save();
                 $this->saveFeed($follower->user_id, $follower->follower_id);
+
+                $loggedUser = Author::where('id', $loggedAuthorID)
+                        ->where('active', 1)
+                        ->first();
+
+                if ($loggedUser == null) {
+                    throw new \Exception("Author not found");
+                }
+
+                $author = Author::where('id', $authorID)
+                        ->where('active', 1)
+                        ->first();
+
+                if ($author == null) {
+                    throw new \Exception("Author not found");
+                }
+
+                $fcmID = $author->fcmId;
+                if ($fcmID != null && !empty($fcmID)) {
+                    $pushMessage = new PushMessage();
+                    $pushMessage->target_type = config('api.target_type_single');
+                    $pushMessage->target_id = $fcmID;
+                    $pushMessage->title = config('strings.push_message_new_follower_title');
+                    $pushMessage->message = sprintf(config('strings.push_message_new_follower_message'), $author->name);
+                    $pushMessage->push_type = config('api.push_type_author');
+
+                    $data = array(
+                        "authorId" => $loggedAuthorID
+                    );
+
+                    $pushMessage->data = json_encode($data);
+
+                    $pushMessage->save();
+                }
             } else {
                 $this->deleteFeed($isFollower->user_id, $isFollower->follower_id);
                 $isFollower->delete();
@@ -1427,6 +1469,14 @@ class ApiController extends Controller
             $comment->comment = base64_encode($request->get("comment"));
             $comment->save();
             
+            $author = Author::where('id', $request->get("authorId"))
+                ->where('active', 1)
+                ->first();
+
+            if ($author == null) {
+                throw new \Exception("Author not found");
+            }
+            
             /************** BOC- Enqueue push notification ************/
                 
                 try {
@@ -1446,7 +1496,7 @@ class ApiController extends Controller
                             $pushMessage->target_type = config('api.target_type_single');
                             $pushMessage->target_id = $fcmID;
                             $pushMessage->title = config('strings.push_message_new_comment_title');                        
-                            $pushMessage->message = config('strings.push_message_new_comment_message');                        
+                            $pushMessage->message = sprintf(config('strings.push_message_new_comment_message'),$author->name);                        
                             $pushMessage->push_type = config('api.push_type_quote');
 
                             $data = array(
