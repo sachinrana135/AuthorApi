@@ -523,7 +523,7 @@ class ApiController extends Controller
                 $quoteObject->imageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
                 $quoteObject->originalImageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
                 $quoteObject->caption = base64_decode($quote->caption);
-                $quoteObject->dateAdded = $quote->created_at->diffForHumans();
+                $quoteObject->dateAdded = Carbon::parse($quote->created_at)->diffForHumans();
                 $quoteObject->tags = explode(',', $quote->tags);
 
 
@@ -609,7 +609,7 @@ class ApiController extends Controller
                 $quoteObject->imageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
                 $quoteObject->originalImageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
                 $quoteObject->caption = base64_decode($quote->caption);
-                $quoteObject->dateAdded = $quote->created_at->diffForHumans();
+                $quoteObject->dateAdded = Carbon::parse($quote->created_at)->diffForHumans();
                 $quoteObject->tags = explode(',', $quote->tags);
 
 
@@ -808,7 +808,7 @@ class ApiController extends Controller
 
                 $commentObject->id = (string)$comment->id;
                 $commentObject->comment = base64_decode($comment->comment);
-                $commentObject->dateAdded = $comment->created_at->diffForHumans();;
+                $commentObject->dateAdded = Carbon::parse($comment->created_at)->diffForHumans();
 
                 $authorObject = app()->make('stdClass');
 
@@ -1128,7 +1128,7 @@ class ApiController extends Controller
                 $response->followingAuthor = false;
             }
 
-            $response->dateCreated = $author->created_at->diffForHumans();;
+            $response->dateCreated = Carbon::parse($author->created_at)->diffForHumans();;
 
             $country = Country::where('id', $author->country_id)
                 ->where('active', 1)
