@@ -26,5 +26,9 @@ return [
     
     'push_type_quote' => 'quote',
     
+    'push_type_author' => 'author',
+    
+    'push_type_comment' => 'comment',
+    
 
 ];
