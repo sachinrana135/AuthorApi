@@ -23,6 +23,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Intervention\Image\Facades\Image;
+use YoHang88\LetterAvatar\LetterAvatar;
 
 class ApiController extends Controller
 {
@@ -334,10 +335,10 @@ class ApiController extends Controller
     public function getUserProfileImageUrl($user_id)
     {
         $author = Author::where('id', $user_id)
-            ->select('firebase_profile_image', 'profile_image')
+            ->select('name','firebase_profile_image', 'profile_image')
             ->first();
         if ($author->profile_image == null && $author->firebase_profile_image == null) {
-            return $this->getDefaultProfileImage();
+            return $this->getDefaultProfileImage($author);     
         } else if ($author->profile_image == null) {
             return $author->firebase_profile_image;
         } else {
@@ -345,9 +346,40 @@ class ApiController extends Controller
         }
     }
 
-    public function getDefaultProfileImage()
-    {
-        return asset(config('app.dir_image') . config('app.dir_users_image') . config('app.default_profile_image'));
+    public function getDefaultProfileImage($author) {
+        //return asset(config('app.dir_image') . config('app.dir_users_image') . config('app.default_profile_image'));
+        
+        $author_name = $author->name;
+        $words_array = explode(" ", $author_name);
+        $count = count($words_array) > 2 ? 2 : count($words_array);
+
+        $new_name_array = array();
+        $first_character_array = array();
+ 
+        for ($i = 0; $i < $count; $i++) {
+            $new_name_array[] = $words_array[$i];
+            $first_character_array[] = substr($words_array[$i], 0, 1);
+        }
+
+        $extension = ".png";
+
+        $thumbnail_file_name = implode("", $first_character_array) . $extension;
+
+        $thumbnail_file_path = config('app.dir_image') . config('app.dir_thumbnails') . $thumbnail_file_name;
+
+        if (!file_exists($thumbnail_file_path)) {
+            
+            $new_name = implode(" ", $new_name_array);
+
+            // Square Shape, Size 64px
+            $avatar = new LetterAvatar($new_name, 'square', 200);
+
+            // Save Image As PNG/JPEG
+            $avatar->saveAs($thumbnail_file_path, "image/png");
+            
+        }
+
+        return asset($thumbnail_file_path);
     }
 
     public function getAuthorThumbnailUrl($file_name, $is_original = false, $width, $height)
@@ -1542,7 +1574,6 @@ class ApiController extends Controller
                 "width" => 500,
                 "height" => 500
             ),             
-             */
             array(
                 "width" => 700,
                 "height" => 700
@@ -1550,7 +1581,8 @@ class ApiController extends Controller
             array(
                 "width" => 1000,
                 "height" => 1000
-            ),
+            )             
+             */
         );
 
         $original_file_path = config('app.dir_image') . config('app.dir_quotes_image') . $file_name;
