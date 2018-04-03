@@ -10,9 +10,9 @@ return [
 
     'api_status' => 'true',
 
-    'api_token' => 'be7a16fae793838c7ef167714ba36d2e',
+    'api_token' => env('API_TOKEN', 'Your API Token'),
 
-    'app_min_version_support' => '1',
+    'app_min_version_support' => env('APP_MIN_VERSION_SUPPORT', 'Minimum app version supported'),
 
     'error_type_toast' => 'toast',
 

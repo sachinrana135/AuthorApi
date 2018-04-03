@@ -1574,7 +1574,6 @@ class ApiController extends Controller
                 "width" => 500,
                 "height" => 500
             ),             
-             */
             array(
                 "width" => 700,
                 "height" => 700
@@ -1582,7 +1581,8 @@ class ApiController extends Controller
             array(
                 "width" => 1000,
                 "height" => 1000
-            ),
+            )             
+             */
         );
 
         $original_file_path = config('app.dir_image') . config('app.dir_quotes_image') . $file_name;
