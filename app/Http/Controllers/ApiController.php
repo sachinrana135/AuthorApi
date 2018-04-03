@@ -523,7 +523,7 @@ class ApiController extends Controller
                 $quoteObject->imageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
                 $quoteObject->originalImageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
                 $quoteObject->caption = base64_decode($quote->caption);
-                $quoteObject->dateAdded = date('d-M-y h:i A', strtotime($quote->created_at));
+                $quoteObject->dateAdded = $quote->created_at->diffForHumans();
                 $quoteObject->tags = explode(',', $quote->tags);
 
 
@@ -609,7 +609,7 @@ class ApiController extends Controller
                 $quoteObject->imageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
                 $quoteObject->originalImageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
                 $quoteObject->caption = base64_decode($quote->caption);
-                $quoteObject->dateAdded = date('d-M-y h:i A', strtotime($quote->created_at));
+                $quoteObject->dateAdded = $quote->created_at->diffForHumans();
                 $quoteObject->tags = explode(',', $quote->tags);
 
 
@@ -708,7 +708,7 @@ class ApiController extends Controller
             $response->imageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
             $response->originalImageUrl = $this->getQuoteThumbnailUrl($quote->image, true);
             $response->caption = base64_decode($quote->caption);
-            $response->dateAdded = $quote->created_at->format('d-M-y h:i A');
+            $response->dateAdded = $quote->created_at->diffForHumans();;
             $response->tags = trim($quote->tags) != "" ? explode(',', $quote->tags) : array();
 
             $author = Author::where('id', $quote->user_id)
@@ -808,7 +808,7 @@ class ApiController extends Controller
 
                 $commentObject->id = (string)$comment->id;
                 $commentObject->comment = base64_decode($comment->comment);
-                $commentObject->dateAdded = date('d-M-y h:i A', strtotime($comment->created_at));
+                $commentObject->dateAdded = $comment->created_at->diffForHumans();;
 
                 $authorObject = app()->make('stdClass');
 
@@ -1128,7 +1128,7 @@ class ApiController extends Controller
                 $response->followingAuthor = false;
             }
 
-            $response->dateCreated = $author->created_at->format('d-M-y h:i A');
+            $response->dateCreated = $author->created_at->diffForHumans();;
 
             $country = Country::where('id', $author->country_id)
                 ->where('active', 1)
