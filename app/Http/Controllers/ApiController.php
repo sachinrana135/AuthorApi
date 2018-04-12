@@ -215,7 +215,8 @@ class ApiController extends Controller
                 
                 $authorID = $filterObject->authorID;
                 
-                $followers = Follower::where('user_id', $authorID)
+                $followers = Follower::where('user_id', $authorID) 
+                    ->orderBy('created_at', 'desc')
                     ->paginate(10, ['*'], 'page', $page);
 
                 foreach ($followers as $user) {
@@ -466,6 +467,8 @@ class ApiController extends Controller
                 } else {
                     $sql->orderBy('quotes.created_at', 'desc');
                 }
+            } else {
+                $sql->orderBy('quotes.created_at', 'desc');
             }
 
             if (isset($filterObject->categories)) {
@@ -795,6 +798,8 @@ class ApiController extends Controller
             if (isset($filterObject->quoteID)) {
                 $sql->where('comments.quote_id', $filterObject->quoteID);
             }
+            
+            $sql->orderBy('comments.created_at', 'desc');
 
             if (isset($filterObject->page)) {
                 $sql->paginate(10, ['*'], 'page', $filterObject->page);
