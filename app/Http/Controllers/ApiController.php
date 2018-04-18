@@ -1023,7 +1023,7 @@ class ApiController extends Controller
                     $pushMessage->target_type = config('api.target_type_single');
                     $pushMessage->target_id = $fcmID;
                     $pushMessage->title = config('strings.push_message_new_follower_title');
-                    $pushMessage->message = sprintf(config('strings.push_message_new_follower_message'), $author->name);
+                    $pushMessage->message = sprintf(config('strings.push_message_new_follower_message'), $loggedUser->name);
                     $pushMessage->push_type = config('api.push_type_author');
 
                     $data = array(
