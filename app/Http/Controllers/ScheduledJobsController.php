@@ -38,7 +38,7 @@ class ScheduledJobsController extends Controller {
     public function sendPushmessage(Request $request) {
         $messages = PushMessage::where('is_sent', 0)
                 ->where('num_attempts', '<', "3")
-                ->orderBy('created_at', 'asc')
+                ->orderBy('id', 'asc')
                 ->get();
 
         foreach ($messages as $message) {
