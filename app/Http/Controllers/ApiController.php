@@ -216,7 +216,7 @@ class ApiController extends Controller
                 $authorID = $filterObject->authorID;
                 
                 $followers = Follower::where('user_id', $authorID) 
-                    ->orderBy('created_at', 'desc')
+                    ->orderBy('id', 'desc')
                     ->paginate(10, ['*'], 'page', $page);
 
                 foreach ($followers as $user) {
@@ -457,7 +457,7 @@ class ApiController extends Controller
             }
             if (isset($filterObject->filterType)) {
                 if ($filterObject->filterType == "latest") {
-                    $sql->orderBy('quotes.created_at', 'desc');
+                    $sql->orderBy('quotes.id', 'desc');
                 } elseif ($filterObject->filterType == "trending") {
                     $sql->where('quotes.created_at', '>=', Carbon::now()->subDays(2));
                     $sql->orderBy('total_likes', 'desc');
@@ -465,10 +465,10 @@ class ApiController extends Controller
                     $sql->where('quotes.created_at', '>=', Carbon::now()->subDays(20));
                     $sql->orderBy('total_views', 'desc');
                 } else {
-                    $sql->orderBy('quotes.created_at', 'desc');
+                    $sql->orderBy('quotes.id', 'desc');
                 }
             } else {
-                $sql->orderBy('quotes.created_at', 'desc');
+                $sql->orderBy('quotes.id', 'desc');
             }
 
             if (isset($filterObject->categories)) {
@@ -799,7 +799,7 @@ class ApiController extends Controller
                 $sql->where('comments.quote_id', $filterObject->quoteID);
             }
             
-            $sql->orderBy('comments.created_at', 'desc');
+            $sql->orderBy('comments.id', 'desc');
 
             if (isset($filterObject->page)) {
                 $sql->paginate(10, ['*'], 'page', $filterObject->page);
