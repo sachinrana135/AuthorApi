@@ -8,11 +8,13 @@ return [
    |--------------------------------------------------------------------------
    */
 
-    'api_status' => 'true',
+    'api_status' => env('API_STATUS', 'Set false for maintainence'),
 
-    'api_token' => env('API_TOKEN', 'Your API Token'),
+    'api_token' => env('API_TOKEN', 'Add your API Token'),
 
-    'app_min_version_support' => env('APP_MIN_VERSION_SUPPORT', 'Minimum app version supported'),
+    'app_min_version_support' => env('APP_MIN_VERSION_SUPPORT', 'Minimum app version supported by the API'),
+    
+    'app_live_version_code' => env('APP_LIVE_VERSION_CODE', 'Set current app live version number here'),
 
     'error_type_toast' => 'toast',
 

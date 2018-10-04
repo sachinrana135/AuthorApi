@@ -30,7 +30,7 @@ class ApiMiddleware
 
         $apiResponse = new ApiResponse();
 
-        if(config('api.api_status') == "false") {
+        if(config('api.api_status') === false) {
             $apiResponse->error->setType(config('api.error_type_dialog'));
             $apiResponse->error->setMessage("We are on maintenance and get back soon!");
             return $apiResponse->outputResponse($apiResponse);

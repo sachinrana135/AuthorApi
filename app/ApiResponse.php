@@ -13,8 +13,6 @@ use App;
 
 class ApiResponse
 {
-
-    public $config = '';
     public $response = '';
     public $error = '';
 
@@ -23,25 +21,7 @@ class ApiResponse
      */
     public function __construct()
     {
-        $this->config = new ApiConfig();
         $this->error = new ApiError();
-    }
-
-
-    /**
-     * @return mixed
-     */
-    public function getConfig()
-    {
-        return $this->config;
-    }
-
-    /**
-     * @param mixed $config
-     */
-    public function setConfig($config)
-    {
-        $this->config = $config;
     }
 
     /**
@@ -78,50 +58,7 @@ class ApiResponse
 
     public function outputResponse(ApiResponse $apiResponse)
     {
-        // Set Config Values
-        $apiResponse->config->setApiStatus(config('api.api_status'));
-        $apiResponse->config->setMinSupportVersion(config('api.app_min_version_support'));
         return response()->json($apiResponse);
-    }
-}
-
-class ApiConfig
-{
-
-    public $apiStatus = '';
-    public $minSupportVersion = '';
-
-
-    /**
-     * @return mixed
-     */
-    public function getApiStatus()
-    {
-        return $this->apiStatus;
-    }
-
-    /**
-     * @param mixed $apiStatus
-     */
-    public function setApiStatus($apiStatus)
-    {
-        $this->apiStatus = $apiStatus;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getMinSupportVersion()
-    {
-        return $this->minSupportVersion;
-    }
-
-    /**
-     * @param mixed $minSupportVersion
-     */
-    public function setMinSupportVersion($minSupportVersion)
-    {
-        $this->minSupportVersion = $minSupportVersion;
     }
 }
 
