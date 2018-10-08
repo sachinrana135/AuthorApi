@@ -43,7 +43,7 @@ class ApiController extends Controller {
             
             $response['isUpdateAvailable'] = (config('api.app_live_version_code') > $request->header("appVersionCode")) ? true : false;
 
-            $response['minSupportVersion'] = (config('api.app_min_version_support'));
+            $response['isForceUpdate'] = $request->header("appVersionCode") < (config('api.app_min_version_support'));
 
             $apiResponse->setResponse($response);
 
