@@ -32,5 +32,7 @@ return [
     
     'push_type_comment' => 'comment',
     
+    'push_type_app_upgrade' => 'app_upgrade',
+    
 
 ];

@@ -66,11 +66,16 @@ class ScheduledJobsController extends Controller {
                     $dataBuilder->addData(['imageUrl' => $message->image]);
                 }
 
-                if ($message->push_type == config('api.push_type_quote')) {
+                if ($message->push_type == config('api.push_type_app_upgrade')) {
+                    $data = json_decode($message->data);
+                    $dataBuilder->addData(['pushType' => config('api.push_type_app_upgrade')]);
+                    $dataBuilder->addData(['appLiveVersionCode' => config('api.app_live_version_code')]);
+                    $dataBuilder->addData(['autoUpgrade' => true]);
+                } else if ($message->push_type == config('api.push_type_quote')) {
                     $data = json_decode($message->data);
                     $dataBuilder->addData(['pushType' => config('api.push_type_quote')]);
                     $dataBuilder->addData(['quoteId' => $data->quoteId]);
-                }else if ($message->push_type == config('api.push_type_author')) {
+                } else if ($message->push_type == config('api.push_type_author')) {
                     $data = json_decode($message->data);
                     $dataBuilder->addData(['pushType' => config('api.push_type_author')]);
                     $dataBuilder->addData(['authorId' => $data->authorId]);
@@ -95,9 +100,9 @@ class ScheduledJobsController extends Controller {
                 }
                 $message->num_attempts = $message->num_attempts + 1;
                 $message->date_last_attempt = date('Y-m-d H:i:s', strtotime("now"));
-               // $message->fcm_response = $downstreamResponse;
+                // $message->fcm_response = $downstreamResponse;
                 $message->save();
-                
+
                 dd($downstreamResponse);
 
                 /*
@@ -139,7 +144,12 @@ class ScheduledJobsController extends Controller {
                     $dataBuilder->addData(['imageUrl' => $message->image]);
                 }
 
-                if ($message->push_type == config('api.push_type_quote')) {
+                if ($message->push_type == config('api.push_type_app_upgrade')) {
+                    $data = json_decode($message->data);
+                    $dataBuilder->addData(['pushType' => config('api.push_type_app_upgrade')]);
+                    $dataBuilder->addData(['appLiveVersionCode' => config('api.app_live_version_code')]);
+                    $dataBuilder->addData(['autoUpgrade' => true]);
+                } else if ($message->push_type == config('api.push_type_quote')) {
                     $data = json_decode($message->data);
                     $dataBuilder->addData(['pushType' => config('api.push_type_quote')]);
                     $dataBuilder->addData(['quoteId' => $data->quoteId]);
