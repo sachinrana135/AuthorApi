@@ -68,11 +68,9 @@ class ApiResponse {
     }
 
     public function outputResponse(ApiResponse $apiResponse) {
-        // Set Config Values
-        if ($appVersionCode <= 9) {
-            $apiResponse->config->setApiStatus(config('api.api_status'));
-            $apiResponse->config->setMinSupportVersion(config('api.app_min_version_support'));
-        }
+       // Set Config Values
+        $apiResponse->config->setApiStatus(config('api.api_status'));
+        $apiResponse->config->setMinSupportVersion(config('api.app_min_version_support'));
         return response()->json($apiResponse);
     }
 
