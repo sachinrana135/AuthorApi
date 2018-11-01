@@ -44,6 +44,8 @@ class ApiController extends Controller {
             $response['isUpdateAvailable'] = (config('api.app_live_version_code') > $request->header("appVersionCode")) ? true : false;
 
             $response['isForceUpdate'] = $request->header("appVersionCode") < (config('api.app_min_version_support'));
+            
+            $response['notifyUpdateFrequency'] = config('api.app_notify_update_frequency');
 
             $apiResponse->setResponse($response);
 

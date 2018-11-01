@@ -15,6 +15,8 @@ return [
     'app_min_version_support' => env('APP_MIN_VERSION_SUPPORT', 'Minimum app version supported by the API'),
     
     'app_live_version_code' => env('APP_LIVE_VERSION_CODE', 'Set current app live version number here'),
+    
+    'app_notify_update_frequency' => env('NOTIFY_UPDATE_FRQUENCY', 'Set frequency number after which user will be notify to update app after app launch'),
 
     'error_type_toast' => 'toast',
 
