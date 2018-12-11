@@ -343,7 +343,7 @@ class ApiController extends Controller {
         } else if ($author->profile_image == null) {
             return $author->firebase_profile_image;
         } else {
-            return $this->getAuthorThumbnailUrl($author->profile_image, false, 200, 200);
+            return $this->getAuthorThumbnailUrl($author->profile_image, false, 500, 500);
         }
     }
 
