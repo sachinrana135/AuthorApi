@@ -134,6 +134,8 @@ return [
     'dir_thumbnails' => "thumbnails/",
 
     'dir_quotes_image' => "quotes/",
+    
+    'dir_post_image' => "posts/",
 
     'dir_users_image' => "users/",
 

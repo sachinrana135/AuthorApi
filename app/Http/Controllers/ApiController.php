@@ -40,11 +40,11 @@ class ApiController extends Controller {
             $response = array();
 
             $response['apiStatus'] = (config('api.api_status'));
-            
+
             $response['isUpdateAvailable'] = (config('api.app_live_version_code') > $request->header("appVersionCode")) ? true : false;
 
             $response['isForceUpdate'] = $request->header("appVersionCode") < (config('api.app_min_version_support'));
-            
+
             $response['notifyUpdateFrequency'] = config('api.app_notify_update_frequency');
 
             $apiResponse->setResponse($response);
@@ -373,7 +373,7 @@ class ApiController extends Controller {
             $new_name = implode(" ", $new_name_array);
 
             // Square Shape, Size 64px
-            $avatar = new LetterAvatar($new_name, 'square', 200);
+            $avatar = new LetterAvatar($new_name, 'square', 500);
 
             // Save Image As PNG/JPEG
             $avatar->saveAs($thumbnail_file_path, "image/png");
@@ -1644,6 +1644,32 @@ class ApiController extends Controller {
                 /*                 * ************ EOC- Enqueue push notification *********** */
             }
 
+            $apiResponse->setResponse($response);
+
+            return $apiResponse->outputResponse($apiResponse);
+        } catch (\Exception $e) {
+            $apiResponse->error->setType(config('api.error_type_dialog'));
+            $apiResponse->error->setMessage($e->getMessage());
+            return $apiResponse->outputResponse($apiResponse);
+        }
+    }
+
+    public function saveImage(Request $request) {
+        $apiResponse = new ApiResponse();
+        try {
+
+            $response = app()->make('stdClass');
+
+            $image = base64_decode($request->get('image'));
+
+            while (true) {
+                $file_name = uniqid('post_', true) . '.JPG';
+                $file_path = config('app.dir_image') . config('app.dir_post_image') . $file_name;
+                if (!file_exists($file_path)) break;
+            }
+
+            $result = file_put_contents($file_path, $image);
+            $response->imageUrl = asset($file_path);
             $apiResponse->setResponse($response);
 
             return $apiResponse->outputResponse($apiResponse);

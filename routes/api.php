@@ -42,4 +42,5 @@ Route::post('/getUserFeed', 'ApiController@getUserFeed');
 Route::post('/deleteQuote', 'ApiController@deleteQuote');
 Route::post('/mapFcmIdToUser', 'ApiController@mapFcmIdToUser');
 Route::post('/getStartUpConfig', 'ApiController@getStartUpConfig');
+Route::post('/saveImage', 'ApiController@saveImage');
 
